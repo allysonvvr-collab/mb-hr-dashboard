@@ -4,7 +4,7 @@ import { todaySA } from '../lib/timezone';
 import { Plus, Edit2, Trash2, X, Check, Star } from 'lucide-react';
 import { TabHeader } from './TabHeader';
 const STATUSES=['Applied','Phone Screen','Interview','Offer','Hired','Rejected'];
-const ROLES=['Crew Member','Crew Leader','Foreman','Office Assistant','Office Manager'];
+const ROLES = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker'];
 const STATUS_COLORS={ Applied:'#6b7280','Phone Screen':'#f59e0b',Interview:'#3b82f6',Offer:'#8b5cf6',Hired:'#16a34a',Rejected:'#dc2626' };
 function StarRating({ value, onChange }) {
   return <div style={{ display:'flex', gap:2 }}>{[1,2,3,4,5].map(n=><Star key={n} size={16} fill={n<=value?'#f59e0b':'none'} color={n<=value?'#f59e0b':'#d1d5db'} style={{ cursor:onChange?'pointer':'default' }} onClick={()=>onChange&&onChange(n)} />)}</div>;

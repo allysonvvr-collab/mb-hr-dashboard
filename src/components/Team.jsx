@@ -4,7 +4,7 @@ import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
 import { isBirthdayUpcoming, daysUntilBirthday } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 
-const ROLES = ['Foreman', 'Crew Leader', 'Crew Member', 'Office Manager', 'Office Assistant'];
+const ROLES = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker'];
 const COLORS = ['#1B3A2D','#224d3a','#2d6349','#0d1f16','#3a7a5c','#4d9973','#163025'];
 
 function Avatar({ text }) {
@@ -21,7 +21,7 @@ function StrikeBadge({ count }) {
   return <span style={{ background: count >= 2 ? '#dc2626' : '#f59e0b', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>{count} Strike{count > 1 ? 's' : ''}</span>;
 }
 
-const emptyEmp = { name: '', role: 'Crew Member', phone: '', email: '', start_date: '', birthday: '', wage: '', strikes: 0 };
+const emptyEmp = { name: '', role: 'Crew Worker', phone: '', email: '', start_date: '', birthday: '', wage: '', strikes: 0 };
 
 const inputStyle = {
   padding: '10px 12px',
@@ -51,7 +51,7 @@ export default function Team() {
     setForm({
       id: emp.id,
       name: emp.name || '',
-      role: emp.role || 'Crew Member',
+      role: emp.role || 'Crew Worker',
       phone: emp.phone || '',
       email: emp.email || '',
       start_date: emp.start_date || '',
