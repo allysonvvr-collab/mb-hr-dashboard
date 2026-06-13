@@ -28,8 +28,36 @@ export function AppProvider({ children }) {
   }, []);
 
   const fetchProfile = async (uid) => {
-    const { data: p } = await supabase.from('profiles').select('*').eq('id', uid).single();
-    setProfile(p);
+    try {
+      const { data: p, error } = await supabase.from('profiles').select('*').eq('id', uid).maybeSingle();
+      if (p) {
+        setProfile(p);
+      } else {
+        // Profile may not exist yet (trigger delay) — create it inline
+        const userObj = (await supabase.auth.getUser()).data?.user;
+        if (userObj) {
+          const role = userObj.email === 'office@macariobros.com' ? 'super_admin' : 'user';
+          const { data: newP } = await supabase.from('profiles').upsert({
+            id: uid,
+            email: userObj.email,
+            full_name: userObj.email.split('@')[0],
+            role,
+          }, { onConflict: 'id' }).select().maybeSingle();
+          setProfile(newP || { id: uid, email: userObj.email, role });
+        }
+      }
+    } catch(e) {
+      console.warn('Profile fetch error:', e.message);
+      // Fallback: still let user in, derive role from email
+      const userObj = (await supabase.auth.getUser()).data?.user;
+      if (userObj) {
+        setProfile({
+          id: uid,
+          email: userObj.email,
+          role: userObj.email === 'office@macariobros.com' ? 'super_admin' : 'user',
+        });
+      }
+    }
     setLoading(false);
   };
 
