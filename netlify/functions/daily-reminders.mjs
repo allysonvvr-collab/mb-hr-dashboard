@@ -1,13 +1,14 @@
 // daily-reminders.mjs
-// Uses fetch to call Gmail API — no external dependencies needed
+// Uses Brevo (Sendinblue) free API — send to ANY email, no domain needed
+// Free plan: 300 emails/day forever
 
-const SUPABASE_URL       = process.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY       = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const GMAIL_USER         = process.env.GMAIL_USER;
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
-const ALERT_EMAIL        = process.env.ALERT_EMAIL || 'office@macariobros.com';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const ALERT_EMAIL  = process.env.ALERT_EMAIL || 'office@macariobros.com';
+const FROM_EMAIL   = process.env.FROM_EMAIL  || 'allysonvvr@gmail.com';
+const FROM_NAME    = 'Macario Brothers HR';
 
-// ── Helpers ──────────────────────────────────────────────────
 function getSADate() {
   return new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' }));
 }
@@ -36,38 +37,6 @@ function getAnniversaryInfo(startDate) {
   return { monthDay, days, years };
 }
 
-// ── Send email via SMTP2GO (free, no domain needed) ──────────
-// Actually use fetch to call smtp2go API — totally free, 1000 emails/mo
-// OR we use Supabase's built-in email if configured
-// Simplest: use fetch to call a simple SMTP relay via smtpjs pattern
-
-// ── Send via Gmail SMTP using raw SMTP over fetch isn't possible
-// Use smtp2go free API instead — sign up free at smtp2go.com
-// OR use mailersend free tier
-// 
-// BEST FREE NO-DOMAIN OPTION: Use Supabase Edge Functions
-// OR: Use smtp2go free API
-
-async function sendViaSmtp2go({ to, subject, html, from, fromName }) {
-  const SMTP2GO_KEY = process.env.SMTP2GO_API_KEY;
-  
-  const res = await fetch('https://api.smtp2go.com/v3/email/send', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      api_key: SMTP2GO_KEY,
-      to: [to],
-      sender: `${fromName} <${from}>`,
-      subject,
-      html_body: html,
-    }),
-  });
-  const data = await res.json();
-  if (!res.ok || data.data?.error) throw new Error(JSON.stringify(data));
-  return data;
-}
-
-// ── Email HTML ───────────────────────────────────────────────
 function buildHTML(birthdays, anniversaries, todayStr) {
   const badge = (days) => {
     const color = days === 0 ? '#dc2626' : days <= 3 ? '#d97706' : '#166534';
@@ -118,43 +87,30 @@ function buildHTML(birthdays, anniversaries, todayStr) {
 </body></html>`;
 }
 
-// ── Main ─────────────────────────────────────────────────────
 export const handler = async (event) => {
   console.log('daily-reminders triggered');
 
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Missing Supabase env vars' }) };
-  }
-
-  if (!process.env.SMTP2GO_API_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Missing SMTP2GO_API_KEY' }) };
+  if (!SUPABASE_URL || !SUPABASE_KEY || !BREVO_API_KEY) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'Missing env vars', detail: { SUPABASE_URL:!!SUPABASE_URL, SUPABASE_KEY:!!SUPABASE_KEY, BREVO_API_KEY:!!BREVO_API_KEY } }) };
   }
 
   try {
-    // 1. Fetch employees from Supabase using fetch (no SDK needed)
     const res = await fetch(`${SUPABASE_URL}/rest/v1/employees?select=*&active=eq.true`, {
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-      },
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
     });
     const employees = await res.json();
-    if (!Array.isArray(employees)) throw new Error('Bad Supabase response: ' + JSON.stringify(employees));
+    if (!Array.isArray(employees)) throw new Error('Supabase error: ' + JSON.stringify(employees));
 
     const DAYS = 7;
     const today = getSADate();
-    const todayStr = today.toLocaleDateString('en-US', {
-      timeZone: 'America/Chicago', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
-    });
+    const todayStr = today.toLocaleDateString('en-US', { timeZone:'America/Chicago', weekday:'long', month:'long', day:'numeric', year:'numeric' });
 
-    // 2. Birthdays
     const birthdays = employees
       .filter(e => e.birthday)
       .map(e => ({ ...e, days: daysUntil(e.birthday) }))
       .filter(e => e.days !== null && e.days >= 0 && e.days <= DAYS)
       .sort((a, b) => a.days - b.days);
 
-    // 3. Anniversaries
     const anniversaries = employees
       .filter(e => e.start_date)
       .map(e => {
@@ -169,20 +125,29 @@ export const handler = async (event) => {
       return { statusCode: 200, body: JSON.stringify({ message: 'No upcoming events today' }) };
     }
 
-    // 4. Subject
     const parts = [];
     if (birthdays.length)     parts.push(`${birthdays.length} birthday${birthdays.length > 1 ? 's' : ''}`);
     if (anniversaries.length) parts.push(`${anniversaries.length} anniversary${anniversaries.length > 1 ? 'ies' : ''}`);
-    const subject = `MB HR: ${parts.join(' & ')} coming up`;
 
-    // 5. Send via smtp2go
-    await sendViaSmtp2go({
-      to: ALERT_EMAIL,
-      from: 'hr@macariobros-hr.netlify.app',
-      fromName: 'Macario Brothers HR',
-      subject,
-      html: buildHTML(birthdays, anniversaries, todayStr),
+    // Send via Brevo
+    const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': BREVO_API_KEY,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { name: FROM_NAME, email: FROM_EMAIL },
+        to: [{ email: ALERT_EMAIL, name: 'MB Office' }],
+        subject: `MB HR: ${parts.join(' & ')} coming up`,
+        htmlContent: buildHTML(birthdays, anniversaries, todayStr),
+      }),
     });
+
+    const brevoData = await brevoRes.json();
+    console.log('Brevo response:', JSON.stringify(brevoData));
+    if (!brevoRes.ok) throw new Error('Brevo error: ' + JSON.stringify(brevoData));
 
     return { statusCode: 200, body: JSON.stringify({ message: 'Email sent', birthdays: birthdays.length, anniversaries: anniversaries.length }) };
 
