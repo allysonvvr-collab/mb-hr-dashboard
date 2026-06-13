@@ -27,7 +27,7 @@ begin
     new.email,
     coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
     case
-      when new.email = 'office@macariobrotherslawncare.com' then 'super_admin'::user_role
+      when new.email = 'office@macariobros.com' then 'super_admin'::user_role
       else 'user'::user_role
     end
   );

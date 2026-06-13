@@ -1,15 +1,15 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --green-900: #14401a;
-  --green-800: #1d5c25;
-  --green-700: #2d6a1f;
-  --green-600: #3a7d2e;
-  --green-500: #4a9b3d;
-  --green-400: #6abf57;
-  --green-100: #dcfce7;
-  --green-50: #f0fdf4;
-  --accent: #8bc34a;
+  --green-900: #0d1f16;
+  --green-800: #1B3A2D;
+  --green-700: #224d3a;
+  --green-600: #2d6349;
+  --green-500: #3a7a5c;
+  --green-400: #4d9973;
+  --green-100: #d4ede0;
+  --green-50: #edf7f2;
+  --accent: #5db88a;
   --red: #dc2626;
   --amber: #f59e0b;
   --blue: #3b82f6;
