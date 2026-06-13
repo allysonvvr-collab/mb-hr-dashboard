@@ -10,9 +10,10 @@ import Raises from './components/Raises';
 import Uniforms from './components/Uniforms';
 import Incidents from './components/Incidents';
 import Certifications from './components/Certifications';
+import Celebrations from './components/Celebrations';
 import UserManagement from './components/UserManagement';
 import mbLogo from './assets/mb-logo.webp';
-import { Download, Users, UserPlus, BarChart2, Star, Calendar, TrendingUp, Shirt, AlertTriangle, Award, LogOut, Crown, Shield, User, Settings } from 'lucide-react';
+import { Download, Users, UserPlus, BarChart2, Star, Calendar, TrendingUp, Shirt, AlertTriangle, Award, LogOut, Crown, Shield, User, Settings, Gift } from 'lucide-react';
 
 const TABS = [
   { id: 'team',           label: 'Team',           icon: Users,         component: Team },
@@ -24,6 +25,7 @@ const TABS = [
   { id: 'uniforms',       label: 'Uniforms',       icon: Shirt,         component: Uniforms },
   { id: 'incidents',      label: 'Incidents',      icon: AlertTriangle, component: Incidents },
   { id: 'certifications', label: 'Certifications', icon: Award,         component: Certifications },
+  { id: 'celebrations',   label: 'Birthdays & Anniversaries', icon: Gift, component: Celebrations },
 ];
 
 const ROLE_ICONS  = { super_admin: Crown, admin: Shield, user: User };
@@ -112,7 +114,7 @@ function Dashboard() {
         <div style={{ background:'#0d1f16', padding:'10px 20px', display:'flex', alignItems:'center', gap:8 }}>
           <button onClick={() => setShowUsers(false)}
             style={{ background:'none', border:'none', color:'rgba(255,255,255,0.6)', cursor:'pointer', fontSize:13, display:'flex', alignItems:'center', gap:6 }}>
-            ← Back to Dashboard
+            Back to Dashboard
           </button>
           <span style={{ color:'rgba(255,255,255,0.3)' }}>·</span>
           <span style={{ color:'#5db88a', fontSize:13, fontWeight:600 }}>User Management</span>
