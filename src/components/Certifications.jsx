@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { TabHeader } from './TabHeader';
 
 const CERT_NAMES = ['OSHA 10','OSHA 30','Pesticide Applicator License','QuickBooks Certified','First Aid/CPR',"Driver's License",'CDL'];
 const STATUSES = ['Active','Expired','In Progress','Pending Renewal'];
@@ -23,10 +24,9 @@ export default function Certifications() {
 
   return (
     <div>
-      <div className="section-header">
-        <h2 className="section-title">Certifications</h2>
+      <TabHeader title="Certifications" settings={<p style={{color:'#6b7280',fontSize:13}}>Track OSHA, pesticide licenses, and other certifications. Expired certs are flagged automatically. Coverage by employee is shown below the table.</p>}>
         {isAdmin && <button className="btn-primary" onClick={openAdd}><Plus size={16} /> Add Certification</button>}
-      </div>
+      </TabHeader>
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Employee</th><th>Certification</th><th>Earned</th><th>Expires</th><th>Status</th>{isAdmin && <th>Actions</th>}</tr></thead>

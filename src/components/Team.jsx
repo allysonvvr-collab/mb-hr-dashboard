@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
 import { isBirthdayUpcoming, daysUntilBirthday } from '../lib/timezone';
+import { TabHeader } from './TabHeader';
 
 const ROLES = ['Foreman', 'Crew Leader', 'Crew Member', 'Office Manager', 'Office Assistant'];
 const COLORS = ['#1B3A2D','#224d3a','#2d6349','#0d1f16','#3a7a5c','#4d9973','#163025'];
@@ -17,11 +18,7 @@ function Avatar({ text }) {
 
 function StrikeBadge({ count }) {
   if (!count) return null;
-  return (
-    <span style={{ background: count >= 2 ? '#dc2626' : '#f59e0b', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
-      {count} Strike{count > 1 ? 's' : ''}
-    </span>
-  );
+  return <span style={{ background: count >= 2 ? '#dc2626' : '#f59e0b', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>{count} Strike{count > 1 ? 's' : ''}</span>;
 }
 
 const emptyEmp = { name: '', role: 'Crew Member', phone: '', email: '', start_date: '', birthday: '', wage: '', strikes: 0 };
@@ -32,6 +29,7 @@ export default function Team() {
   const [form, setForm] = useState(emptyEmp);
   const [search, setSearch] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [sortBy, setSortBy] = useState('name');
 
   const openAdd  = () => { setForm(emptyEmp); setModal('add'); };
   const openEdit = (emp) => { setForm({ ...emp }); setModal(emp); };
@@ -45,21 +43,35 @@ export default function Team() {
     closeModal();
   };
 
-  const handleDelete = (emp) => {
-    setConfirmDelete(emp);
-  };
-
-  const confirmDoDelete = () => {
-    deleteEmployee(confirmDelete.id);
-    setConfirmDelete(null);
-  };
-
-  const filtered = (data.employees || []).filter(e =>
-    e.name.toLowerCase().includes(search.toLowerCase()) ||
-    e.role.toLowerCase().includes(search.toLowerCase())
-  );
-
   const upcomingBdays = (data.employees || []).filter(emp => isBirthdayUpcoming(emp.birthday));
+
+  const filtered = (data.employees || [])
+    .filter(e => e.name.toLowerCase().includes(search.toLowerCase()) || e.role.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'wage') return b.wage - a.wage;
+      if (sortBy === 'role') return a.role.localeCompare(b.role);
+      if (sortBy === 'start') return new Date(a.start_date) - new Date(b.start_date);
+      return a.name.localeCompare(b.name);
+    });
+
+  const settingsPanel = (
+    <div>
+      <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
+        Sort Employees By
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+          style={{ padding: '8px 10px', borderRadius: 7, border: '1px solid #e5e7eb', fontSize: 14 }}>
+          <option value="name">Name (A–Z)</option>
+          <option value="role">Role</option>
+          <option value="wage">Wage (High–Low)</option>
+          <option value="start">Start Date (Oldest first)</option>
+        </select>
+      </label>
+      <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: 12, fontSize: 13, color: '#166534' }}>
+        <strong>Total employees:</strong> {(data.employees || []).length}<br />
+        <strong>Total payroll/hr:</strong> ${(data.employees || []).reduce((s, e) => s + Number(e.wage), 0).toFixed(2)}
+      </div>
+    </div>
+  );
 
   return (
     <div>
@@ -70,14 +82,14 @@ export default function Team() {
         </div>
       )}
 
-      <div className="section-header">
+      <TabHeader title="Team" settings={settingsPanel}>
         <input className="search-input" placeholder="Search employees…" value={search} onChange={e => setSearch(e.target.value)} />
         {isAdmin && (
           <button className="btn-primary" onClick={openAdd}>
             <Plus size={16} /> Add Employee
           </button>
         )}
-      </div>
+      </TabHeader>
 
       <div className="card-grid">
         {filtered.map(emp => (
@@ -92,7 +104,6 @@ export default function Team() {
               </div>
               <StrikeBadge count={emp.strikes} />
             </div>
-
             <div className="emp-details">
               <div><span>Phone</span><span>{emp.phone || '—'}</span></div>
               <div><span>Email</span><span style={{ fontSize: 12 }}>{emp.email || '—'}</span></div>
@@ -100,14 +111,13 @@ export default function Team() {
               <div><span>Birthday</span><span>{emp.birthday || '—'}</span></div>
               <div><span>Wage</span><span style={{ color: '#1B3A2D', fontWeight: 700 }}>${Number(emp.wage).toFixed(2)}/hr</span></div>
             </div>
-
             {isAdmin && (
               <div className="card-actions">
-                <button className="btn-icon" onClick={() => openEdit(emp)} title="Edit">
+                <button className="btn-icon" onClick={() => openEdit(emp)} title="Edit employee">
                   <Edit2 size={14} />
                 </button>
                 {isSuperAdmin && (
-                  <button className="btn-icon danger" onClick={() => handleDelete(emp)} title="Delete">
+                  <button className="btn-icon danger" onClick={() => setConfirmDelete(emp)} title="Delete employee">
                     <Trash2 size={14} />
                   </button>
                 )}
@@ -115,17 +125,15 @@ export default function Team() {
             )}
           </div>
         ))}
-        {filtered.length === 0 && (
-          <div className="empty-state" style={{ gridColumn: '1/-1' }}>No employees found.</div>
-        )}
+        {filtered.length === 0 && <div className="empty-state" style={{ gridColumn: '1/-1' }}>No employees found.</div>}
       </div>
 
-      {/* Add / Edit Modal */}
+      {/* Add/Edit Modal */}
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{modal === 'add' ? '➕ Add Employee' : '✏️ Edit Employee'}</h3>
+              <h3>{modal === 'add' ? '➕ Add Employee' : `✏️ Edit — ${form.name}`}</h3>
               <button className="btn-icon" onClick={closeModal}><X size={18} /></button>
             </div>
             <div className="form-grid">
@@ -152,7 +160,7 @@ export default function Team() {
         </div>
       )}
 
-      {/* Delete Confirm Modal */}
+      {/* Delete Confirm */}
       {confirmDelete && (
         <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
           <div className="modal" style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
@@ -161,11 +169,12 @@ export default function Team() {
               <button className="btn-icon" onClick={() => setConfirmDelete(null)}><X size={18} /></button>
             </div>
             <p style={{ color: '#6b7280', fontSize: 14, margin: '8px 0 20px' }}>
-              Are you sure you want to delete <strong>{confirmDelete.name}</strong>? This cannot be undone.
+              Are you sure you want to permanently delete <strong>{confirmDelete.name}</strong>? This cannot be undone.
             </p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setConfirmDelete(null)}>Cancel</button>
-              <button onClick={confirmDoDelete} style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => { deleteEmployee(confirmDelete.id); setConfirmDelete(null); }}
+                style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: 8, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <Trash2 size={14} /> Yes, Delete
               </button>
             </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { todaySA } from '../lib/timezone';
 import { Plus, Trash2, X, Check, Clock } from 'lucide-react';
+import { TabHeader } from './TabHeader';
 
 const TYPES = ['Vacation','Sick','Personal','Other'];
 const STATUS_COLORS = { Approved:'#16a34a', Pending:'#f59e0b', Denied:'#dc2626' };
@@ -24,10 +25,9 @@ export default function TimeOff() {
           <strong>{pending.length} request{pending.length>1?'s':''} pending approval</strong>
         </div>
       )}
-      <div className="section-header">
-        <h2 className="section-title">Time Off Requests</h2>
+      <TabHeader title="Time Off Requests" settings={<p style={{color:'#6b7280',fontSize:13}}>Approve or deny requests from the table below. Pending requests show as alerts on the tab badge.</p>}>
         <button className="btn-primary" onClick={() => { setForm(empty); setModal(true); }}><Plus size={16} /> Add Request</button>
-      </div>
+      </TabHeader>
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Employee</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead>

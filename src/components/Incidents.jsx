@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { todaySA } from '../lib/timezone';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { TabHeader } from './TabHeader';
 
 const empty = { employeeId:'', date:todaySA(), description:'', cost:'', status:'Open', docSigned:false };
 
@@ -29,10 +30,9 @@ export default function Incidents() {
         <div className="stat-card"><div className="stat-num" style={{ color:'#f59e0b' }}>{openCases}</div><div className="stat-label">Open Cases</div></div>
         <div className="stat-card"><div className="stat-num" style={{ color:'#dc2626' }}>${totalCost.toLocaleString()}</div><div className="stat-label">Total Cost</div></div>
       </div>
-      <div className="section-header">
-        <h2 className="section-title">Incident Log</h2>
+      <TabHeader title="Incident Log" settings={<p style={{color:'#6b7280',fontSize:13}}>Log all vehicle damage, property damage, or workplace incidents here. Mark doc_signed once the employee has signed the incident report.</p>}>
         {isAdmin && <button className="btn-primary" onClick={openAdd}><Plus size={16} /> Log Incident</button>}
-      </div>
+      </TabHeader>
       <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
         {(data.incidents||[]).map(inc => {
           const emp = getEmployee(inc.employee_id);

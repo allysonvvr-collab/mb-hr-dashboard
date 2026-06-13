@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { todaySA } from '../lib/timezone';
 import { Plus, Trash2, X, Check, TrendingUp } from 'lucide-react';
+import { TabHeader } from './TabHeader';
 
 const empty = { employeeId:'', date:todaySA(), previous:'', newRate:'', increase:'', reason:'' };
 
@@ -29,10 +30,9 @@ export default function Raises() {
           </div>
         </div>
       </div>
-      <div className="section-header">
-        <h2 className="section-title">Raise History</h2>
+      <TabHeader title="Raise History" settings={<p style={{color:'#6b7280',fontSize:13}}>Log raises here to keep a permanent history. The Annual Raise Window reminder shows current wages for all employees.</p>}>
         {isAdmin && <button className="btn-primary" onClick={() => { setForm(empty); setModal(true); }}><Plus size={16} /> Add Raise</button>}
-      </div>
+      </TabHeader>
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Employee</th><th>Date</th><th>Previous</th><th>New Rate</th><th>Increase</th><th>Reason</th>{isAdmin && <th></th>}</tr></thead>

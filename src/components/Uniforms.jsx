@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { todaySA } from '../lib/timezone';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { TabHeader } from './TabHeader';
 
 const ITEMS=['Polo Shirt','Hat','Jacket','Pants','Safety Vest','Boots','Gloves'];
 const SIZES=['XS','S','M','L','XL','2XL','3XL','One Size'];
@@ -24,10 +25,9 @@ export default function Uniforms() {
 
   return (
     <div>
-      <div className="section-header">
-        <h2 className="section-title">Uniforms Tracker</h2>
+      <TabHeader title="Uniforms Tracker" settings={<p style={{color:'#6b7280',fontSize:13}}>Track polo shirts, hats, and other gear issued to each crew member. Mark items as Needs Replacement when worn out.</p>}>
         {isAdmin && <button className="btn-primary" onClick={() => { setForm(empty); setModal('add'); }}><Plus size={16} /> Issue Uniform</button>}
-      </div>
+      </TabHeader>
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Employee</th><th>Item</th><th>Size</th><th>Qty</th><th>Issued</th><th>Status</th>{isAdmin && <th>Actions</th>}</tr></thead>

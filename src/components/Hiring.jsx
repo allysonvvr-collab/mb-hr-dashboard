@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { todaySA } from '../lib/timezone';
 import { Plus, Edit2, Trash2, X, Check, Star } from 'lucide-react';
+import { TabHeader } from './TabHeader';
 const STATUSES=['Applied','Phone Screen','Interview','Offer','Hired','Rejected'];
 const ROLES=['Crew Member','Crew Leader','Foreman','Office Assistant','Office Manager'];
 const STATUS_COLORS={ Applied:'#6b7280','Phone Screen':'#f59e0b',Interview:'#3b82f6',Offer:'#8b5cf6',Hired:'#16a34a',Rejected:'#dc2626' };
@@ -33,7 +34,7 @@ export default function Hiring() {
             {s} {counts[s]>0&&<span className="count-badge">{counts[s]}</span>}
           </button>
         ))}
-        {isAdmin && <button className="btn-primary ml-auto" onClick={()=>{setForm(emptyApp);setModal('add');}}><Plus size={16} /> Add Applicant</button>}
+        {isAdmin && <button className="btn-primary" onClick={()=>{setForm(emptyApp);setModal('add');}}><Plus size={16} /> Add Applicant</button>}
       </div>
       <div style={{ display:'flex', flexDirection:'column', gap:12, marginTop:16 }}>
         {filtered.map(app=>(

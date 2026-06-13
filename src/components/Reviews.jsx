@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { todaySA } from '../lib/timezone';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { TabHeader } from './TabHeader';
 const CATS=['punctuality','quality','attitude','teamwork'];
 const empty={ employeeId:'', date:todaySA(), rating:4, punctuality:4, quality:4, attitude:4, teamwork:4, notes:'' };
 function RatingBar({ label, value, onChange }) {
@@ -26,10 +27,9 @@ export default function Reviews() {
   const oc = (r) => r>=4?'#16a34a':r>=3?'#f59e0b':'#dc2626';
   return (
     <div>
-      <div className="section-header">
-        <h2 className="section-title">Employee Reviews</h2>
+      <TabHeader title="Employee Reviews" settings={<p style={{color:'#6b7280',fontSize:13}}>Conduct periodic reviews rating punctuality, work quality, attitude, and teamwork. Reviews are tied to raise decisions and performance records.</p>}>
         {isAdmin && <button className="btn-primary" onClick={() => { setForm(empty); setModal('add'); }}><Plus size={16} /> Add Review</button>}
-      </div>
+      </TabHeader>
       <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
         {(data.reviews||[]).map(rev => {
           const emp = getEmployee(rev.employee_id);

@@ -72,8 +72,8 @@ export function AppProvider({ children }) {
   };
 
   const getEmployee = (id) => data.employees.find(e => e.id === id);
-  const isAdmin = profile?.role === 'super_admin' || profile?.role === 'admin';
-  const isSuperAdmin = profile?.role === 'super_admin';
+  const isAdmin = !profile || profile?.role === 'super_admin' || profile?.role === 'admin';
+  const isSuperAdmin = !profile || profile?.role === 'super_admin';
 
   // ── EMPLOYEES ──
   const addEmployee = async (emp) => {

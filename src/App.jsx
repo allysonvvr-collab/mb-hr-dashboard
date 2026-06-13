@@ -33,7 +33,7 @@ const ROLE_COLORS = { super_admin: '#7c3aed', admin: '#1B3A2D', user: '#6b7280' 
 function LoadingScreen() {
   return (
     <div style={{ minHeight: '100vh', background: '#0d1f16', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-      <img src={mbLogo} alt="MB" style={{ height: 44, filter: 'brightness(0) invert(1)', opacity: 0.7 }} />
+      <img src={mbLogo} alt="MB" style={{ height: 44, filter: 'brightness(10)', opacity: 0.8 }} />
       <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Loading…</div>
     </div>
   );
@@ -63,8 +63,8 @@ function Dashboard() {
       <header className="top-header">
         <div className="header-brand">
           <img src={mbLogo} alt="Macario Brothers Lawn Care"
-            style={{ height: 36, width: 'auto', filter: 'brightness(0) invert(1)' }} />
-          <div className="brand-sub" style={{ color:'rgba(255,255,255,0.5)', fontSize:11, letterSpacing:'0.05em', textTransform:'uppercase', marginLeft: 4 }}>
+            style={{ height: 32, width: 'auto', background: 'rgba(255,255,255,0.92)', borderRadius: 6, padding: '3px 8px' }} />
+          <div style={{ color:'rgba(255,255,255,0.5)', fontSize:11, letterSpacing:'0.05em', textTransform:'uppercase', marginLeft: 6 }}>
             HR Dashboard
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Trash2, X, Check } from 'lucide-react';
+import { TabHeader } from './TabHeader';
 const empty = { employeeId:'', month:'', jobsCompleted:'', complaints:0, rating:4 };
 export default function Performance() {
   const { data, getEmployee, addPerformance, deletePerformance, isAdmin } = useApp();
@@ -10,10 +11,9 @@ export default function Performance() {
   const ratingColor = (r) => r>=4?'#16a34a':r===3?'#f59e0b':'#dc2626';
   return (
     <div>
-      <div className="section-header">
-        <h2 className="section-title">Monthly Performance</h2>
+      <TabHeader title="Monthly Performance" settings={<p style={{color:'#6b7280',fontSize:13}}>Log monthly jobs completed, complaints received, and overall rating per employee. Use this to track trends over time.</p>}>
         {isAdmin && <button className="btn-primary" onClick={() => { setForm(empty); setModal(true); }}><Plus size={16} /> Add Entry</button>}
-      </div>
+      </TabHeader>
       <div className="table-wrap">
         <table className="data-table">
           <thead><tr><th>Employee</th><th>Month</th><th>Jobs Done</th><th>Complaints</th><th>Rating</th>{isAdmin&&<th></th>}</tr></thead>
