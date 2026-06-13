@@ -32,10 +32,23 @@ function birthdayInfo(birthday) {
 }
 
 function urgencyColor(days) {
-  if (days <= 3)  return { bg: '#fef2f2', border: '#fecaca', text: '#dc2626', label: 'This week' };
-  if (days <= 7)  return { bg: '#fef3c7', border: '#fde68a', text: '#d97706', label: 'This week' };
-  if (days <= 14) return { bg: '#fffbeb', border: '#fde68a', text: '#92400e', label: 'Next 2 weeks' };
-  return { bg: '#f0fdf4', border: '#86efac', text: '#166534', label: 'This month' };
+  if (days === 0)  return { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' };
+  if (days <= 3)   return { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' };
+  if (days <= 7)   return { bg: '#fef3c7', border: '#fde68a', text: '#d97706' };
+  if (days <= 30)  return { bg: '#fffbeb', border: '#fde68a', text: '#92400e' };
+  if (days <= 90)  return { bg: '#f0fdf4', border: '#86efac', text: '#166534' };
+  return { bg: '#f9fafb', border: '#e5e7eb', text: '#6b7280' };
+}
+
+function urgencyLabel(days) {
+  if (days === 0)   return 'Today!';
+  if (days === 1)   return 'Tomorrow';
+  if (days <= 7)    return 'This week';
+  if (days <= 14)   return 'Next 2 weeks';
+  if (days <= 30)   return 'This month';
+  if (days <= 60)   return 'Next 2 months';
+  if (days <= 90)   return 'Next 3 months';
+  return `${Math.ceil(days / 30)}mo away`;
 }
 
 function EventRow({ name, role, type, monthDay, days, extra }) {
@@ -54,10 +67,10 @@ function EventRow({ name, role, type, monthDay, days, extra }) {
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
         <div style={{ textAlign:'right' }}>
           <div style={{ fontWeight:700, fontSize:13, color:'#1B3A2D' }}>{monthDay}</div>
-          <div style={{ fontSize:12, color:'#6b7280' }}>{days === 0 ? 'Today!' : `${days}d away`}</div>
+          <div style={{ fontSize:12, color:'#6b7280' }}>{days === 0 ? 'Today!' : days === 1 ? 'Tomorrow' : `${days}d away`}</div>
         </div>
         <span style={{ background:colors.bg, border:`1px solid ${colors.border}`, color:colors.text, fontSize:11, fontWeight:600, padding:'3px 8px', borderRadius:20, whiteSpace:'nowrap' }}>
-          {days === 0 ? 'Today' : days <= 7 ? 'This week' : days <= 14 ? '2 weeks' : 'This month'}
+          {urgencyLabel(days)}
         </span>
       </div>
     </div>
