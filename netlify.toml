@@ -5,12 +5,12 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+  external_node_modules = ["nodemailer"]
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Runs every day at 8:00 AM CST (14:00 UTC)
 [functions."daily-reminders"]
   schedule = "0 14 * * *"
