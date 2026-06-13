@@ -11,7 +11,6 @@ import Uniforms from './components/Uniforms';
 import Incidents from './components/Incidents';
 import Certifications from './components/Certifications';
 import UserManagement from './components/UserManagement';
-import { clockSA } from './lib/timezone';
 import mbLogo from './assets/mb-logo.webp';
 import { Download, Users, UserPlus, BarChart2, Star, Calendar, TrendingUp, Shirt, AlertTriangle, Award, LogOut, Crown, Shield, User, Settings } from 'lucide-react';
 
@@ -70,25 +69,21 @@ function Dashboard() {
         </div>
 
         <div className="header-actions">
-          <span style={{ color:'rgba(255,255,255,0.45)', fontSize:11, borderRight:'1px solid rgba(255,255,255,0.15)', paddingRight:12, marginRight:4 }}>
-            🕐 {clock} · San Antonio
-          </span>
-          <div style={{ display:'flex', alignItems:'center', gap:5, color:'rgba(255,255,255,0.65)', fontSize:13 }}>
+<div className="header-user">
             <RoleIcon size={13} color={profile?.role === 'user' ? 'rgba(255,255,255,0.5)' : '#5db88a'} />
-            <span style={{ maxWidth:140, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-              {profile?.full_name || profile?.email?.split('@')[0]}
-            </span>
+            <span>{profile?.full_name || profile?.email?.split('@')[0]}</span>
           </div>
           {isSuperAdmin && (
-            <button className="btn-header" onClick={() => setShowUsers(s => !s)}
+            <button className="btn-header icon-only" onClick={() => setShowUsers(s => !s)}
+              title="User Management"
               style={{ background: showUsers ? 'rgba(93,184,138,0.2)' : undefined }}>
-              <Settings size={15} /> Users
+              <Settings size={15} /><span className="btn-label"> Users</span>
             </button>
           )}
-          <button className="btn-header" onClick={exportData}>
-            <Download size={15} /> Export
+          <button className="btn-header icon-only" onClick={exportData} title="Export data">
+            <Download size={15} /><span className="btn-label"> Export</span>
           </button>
-          <button className="btn-header" onClick={signOut}
+          <button className="btn-header icon-only" onClick={signOut} title="Sign out"
             style={{ background:'rgba(220,38,38,0.2)', borderColor:'rgba(220,38,38,0.4)' }}>
             <LogOut size={15} />
           </button>
