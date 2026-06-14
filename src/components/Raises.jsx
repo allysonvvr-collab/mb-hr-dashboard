@@ -65,7 +65,16 @@ export default function Raises() {
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header"><h3>Add Raise</h3><button className="btn-icon" onClick={()=>setModal(false)}><X size={18}/></button></div>
             <div className="form-grid">
-              <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name} (${Number(e.wage||0).toFixed(2)}/hr)</option>)}</select></label>
+              <label>Employee
+                <select style={inp} value={form.employeeId} onChange={e => {
+                  const emp = (data.employees||[]).find(x=>String(x.id)===e.target.value);
+                  const currentWage = emp ? String(emp.wage||0) : '';
+                  setForm(f => ({ ...f, employeeId:e.target.value, previous:currentWage, increase:'' }));
+                }}>
+                  <option value="">Select...</option>
+                  {(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name} (${Number(e.wage||0).toFixed(2)}/hr)</option>)}
+                </select>
+              </label>
               <label>Date<input style={inp} type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></label>
               <label>Previous Rate ($)<input style={inp} type="number" step="0.25" value={form.previous} onChange={e=>setForm(f=>({...f,previous:e.target.value,increase:calcInc({...f,previous:e.target.value})}))} /></label>
               <label>New Rate ($)<input style={inp} type="number" step="0.25" value={form.newRate} onChange={e=>setForm(f=>({...f,newRate:e.target.value,increase:calcInc({...f,newRate:e.target.value})}))} /></label>

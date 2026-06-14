@@ -112,8 +112,8 @@ export function AppProvider({ children }) {
     deleteEmployee: async (id) => { await supabase.from('employees').delete().eq('id', id); fetchAll(); },
 
     // APPLICANTS
-    addApplicant:    async (a)  => { await supabase.from('applicants').insert([{ name:a.name, role:a.role, phone:a.phone, email:a.email, applied_date:a.applied_date||a.applied, status:a.status, stars:a.stars, notes:a.notes }]); fetchAll(); },
-    updateApplicant: async (a)  => { await supabase.from('applicants').update({ name:a.name, role:a.role, phone:a.phone, email:a.email, applied_date:a.applied_date||a.applied, status:a.status, stars:a.stars, notes:a.notes }).eq('id', a.id); fetchAll(); },
+    addApplicant:    async (a)  => { await supabase.from('applicants').insert([{ name:a.name, role:a.role, phone:a.phone, email:a.email, applied_date:a.applied_date||a.applied, status:a.status, stars:a.stars, notes:a.notes, source:a.source||null }]); fetchAll(); },
+    updateApplicant: async (a)  => { await supabase.from('applicants').update({ name:a.name, role:a.role, phone:a.phone, email:a.email, applied_date:a.applied_date||a.applied, status:a.status, stars:a.stars, notes:a.notes, source:a.source||null }).eq('id', a.id); fetchAll(); },
     deleteApplicant: async (id) => { await supabase.from('applicants').delete().eq('id', id); fetchAll(); },
 
     // TIME OFF
@@ -122,7 +122,12 @@ export function AppProvider({ children }) {
     deleteTimeOff: async (id) => { await supabase.from('time_off').delete().eq('id', id); fetchAll(); },
 
     // RAISES
-    addRaise:    async (r)  => { await supabase.from('raises').insert([{ employee_id:parseInt(r.employeeId), raise_date:r.date, previous_rate:r.previous, new_rate:r.newRate, increase:r.increase, reason:r.reason }]); fetchAll(); },
+    addRaise:    async (r)  => {
+      await supabase.from('raises').insert([{ employee_id:parseInt(r.employeeId), raise_date:r.date, previous_rate:r.previous, new_rate:r.newRate, increase:r.increase, reason:r.reason }]);
+      // Also update the employee's current wage so it matches
+      if (r.newRate) await supabase.from('employees').update({ wage: r.newRate }).eq('id', parseInt(r.employeeId));
+      fetchAll();
+    },
     deleteRaise: async (id) => { await supabase.from('raises').delete().eq('id', id); fetchAll(); },
 
     // INCIDENTS

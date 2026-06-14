@@ -23,9 +23,12 @@ export default function Incidents() {
   return (
     <div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
-        <div className="stat-card"><div className="stat-num">{(data.incidents||[]).length}</div><div className="stat-label">Total</div></div>
-        <div className="stat-card"><div className="stat-num" style={{ color:'#f59e0b' }}>{open}</div><div className="stat-label">Open</div></div>
-        <div className="stat-card"><div className="stat-num" style={{ color:'#dc2626', fontSize:20 }}>${total.toLocaleString()}</div><div className="stat-label">Cost</div></div>
+        <div className="stat-card"><div className="stat-num">{(data.incidents||[]).length}</div><div className="stat-label">Total Cases</div></div>
+        <div className="stat-card"><div className="stat-num" style={{ color:'#f59e0b' }}>{open}</div><div className="stat-label">Open Cases</div></div>
+        <div className="stat-card">
+          <div style={{ fontSize:11, fontWeight:700, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:4 }}>Total Cost</div>
+          <div style={{ fontSize:22, fontWeight:800, fontFamily:'Manrope,sans-serif', color:'#dc2626', lineHeight:1 }}>${total.toLocaleString()}</div>
+        </div>
       </div>
 
       <TabHeader title="Incident Log" settings={<p style={{ fontSize:13, color:'#6b7280' }}>Log vehicle damage, property damage, or workplace incidents. Mark doc signed once employee signs the report.</p>}>

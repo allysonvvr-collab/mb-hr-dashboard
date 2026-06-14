@@ -99,7 +99,9 @@ export default function Team() {
 
       {/* Header row */}
       <div className="section-header">
-        <h2 className="section-title">Team <span style={{ color:'#9ca3af', fontWeight:400, fontSize:13 }}>({filtered.length})</span></h2>
+        <h2 className="section-title">Team 
+          <span style={{ color:'#9ca3af', fontWeight:400, fontSize:13 }}> ({filtered.filter(e=>e.role!=='Owner').length} employees{filtered.filter(e=>e.role==='Owner').length>0?`, ${filtered.filter(e=>e.role==='Owner').length} owner`:''})</span>
+        </h2>
         <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
           <div style={{ position:'relative' }}>
             <Search size={14} style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#9ca3af' }} />

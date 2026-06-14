@@ -130,6 +130,10 @@ body {
   gap: 0;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  position: sticky;
+  top: 56px;
+  z-index: 99;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 .tab-nav::-webkit-scrollbar { display: none; }
 
