@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Edit2, Trash2, X, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, ChevronDown, ChevronUp, Camera } from 'lucide-react';
 import { isBirthdayUpcoming, daysUntilBirthday } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 
@@ -21,10 +21,16 @@ const ROLE_COLORS = {
 
 const AVATAR_COLORS = ['#1B3A2D','#224d3a','#2d6349','#0d1f16','#3a7a5c','#4d9973','#163025'];
 
-function Avatar({ text }) {
+function Avatar({ text, photoUrl, size = 42 }) {
   const bg = AVATAR_COLORS[(text || 'MB').charCodeAt(0) % AVATAR_COLORS.length];
+  if (photoUrl) {
+    return (
+      <img src={photoUrl} alt={text}
+        style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #e5e7eb' }} />
+    );
+  }
   return (
-    <div style={{ background: bg, width: 42, height: 42, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
+    <div style={{ background: bg, width: size, height: size, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: size > 40 ? 13 : 11, flexShrink: 0 }}>
       {(text || 'MB').slice(0, 2).toUpperCase()}
     </div>
   );
@@ -41,7 +47,7 @@ const inputStyle = {
   background: '#fff', color: '#111827', boxSizing: 'border-box',
 };
 
-const emptyEmp = { name: '', role: 'Crew Worker', phone: '', email: '', start_date: '', birthday: '', wage: '', strikes: 0 };
+const emptyEmp = { name: '', role: 'Crew Worker', phone: '', email: '', start_date: '', birthday: '', wage: '', strikes: 0, photo_url: '' };
 
 function RoleSection({ role, employees, onEdit, onDelete, isAdmin, isSuperAdmin }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -72,7 +78,7 @@ function RoleSection({ role, employees, onEdit, onDelete, isAdmin, isSuperAdmin 
             <div key={emp.id} className="emp-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <Avatar text={emp.avatar || emp.name.slice(0, 2)} />
+                  <Avatar text={emp.avatar || emp.name.slice(0, 2)} photoUrl={emp.photo_url} />
                   <div>
                     <div style={{ fontWeight: 700, fontSize: 15 }}>{emp.name}</div>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
@@ -108,21 +114,35 @@ function RoleSection({ role, employees, onEdit, onDelete, isAdmin, isSuperAdmin 
 }
 
 export default function Team() {
-  const { data, addEmployee, updateEmployee, deleteEmployee, isAdmin, isSuperAdmin } = useApp();
+  const { data, addEmployee, updateEmployee, deleteEmployee, isAdmin, isSuperAdmin, uploadEmployeePhoto } = useApp();
   const [modal, setModal]               = useState(null);
   const [form, setForm]                 = useState(emptyEmp);
   const [search, setSearch]             = useState('');
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [saving, setSaving]             = useState(false);
+  const [uploading, setUploading]       = useState(false);
   const [error, setError]               = useState('');
   const [viewMode, setViewMode]         = useState('grouped'); // 'grouped' | 'all'
 
   const openAdd  = () => { setForm(emptyEmp); setError(''); setModal('add'); };
   const openEdit = (emp) => {
-    setForm({ id: emp.id, name: emp.name || '', role: emp.role || 'Crew Worker', phone: emp.phone || '', email: emp.email || '', start_date: emp.start_date || '', birthday: emp.birthday || '', wage: emp.wage !== undefined ? String(emp.wage) : '', strikes: emp.strikes || 0, avatar: emp.avatar || '' });
+    setForm({ id: emp.id, name: emp.name || '', role: emp.role || 'Crew Worker', phone: emp.phone || '', email: emp.email || '', start_date: emp.start_date || '', birthday: emp.birthday || '', wage: emp.wage !== undefined ? String(emp.wage) : '', strikes: emp.strikes || 0, avatar: emp.avatar || '', photo_url: emp.photo_url || '' });
     setError(''); setModal(emp);
   };
   const closeModal = () => { setModal(null); setError(''); };
+
+  const handlePhotoUpload = async (e, empId) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5MB'); return; }
+    setUploading(true);
+    try {
+      await uploadEmployeePhoto(empId, file);
+    } catch (err) {
+      alert('Upload failed: ' + err.message);
+    }
+    setUploading(false);
+  };
 
   const save = async () => {
     if (!form.name.trim()) { setError('Name is required.'); return; }
@@ -224,7 +244,7 @@ export default function Team() {
             <div key={emp.id} className="emp-card">
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                 <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-                  <Avatar text={emp.avatar || emp.name.slice(0,2)} />
+                  <Avatar text={emp.avatar || emp.name.slice(0,2)} photoUrl={emp.photo_url} />
                   <div>
                     <div style={{ fontWeight:700, fontSize:15 }}>{emp.name}</div>
                     <div style={{ color:'#6b7280', fontSize:13 }}>{emp.role}</div>
@@ -274,6 +294,26 @@ export default function Team() {
               <label>Wage ($/hr)<input style={inputStyle} type="number" step="0.25" min="0" value={form.wage} onChange={e => setForm(f => ({ ...f, wage: e.target.value }))} placeholder="15.00" /></label>
               <label>Strikes (0–3)<input style={inputStyle} type="number" min="0" max="3" value={form.strikes} onChange={e => setForm(f => ({ ...f, strikes: e.target.value }))} /></label>
             </div>
+            {/* Photo upload — only show when editing existing employee */}
+            {modal !== 'add' && (
+              <div style={{ margin:'16px 0', padding:'14px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb' }}>
+                <div style={{ fontSize:13, fontWeight:600, color:'#374151', marginBottom:10 }}>Employee Photo</div>
+                <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <Avatar text={form.avatar || form.name.slice(0,2)} photoUrl={form.photo_url} size={52} />
+                  <div>
+                    <label style={{ display:'flex', alignItems:'center', gap:6, background:'#1B3A2D', color:'#fff', padding:'7px 12px', borderRadius:7, fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                      <Camera size={14} />
+                      {uploading ? 'Uploading...' : form.photo_url ? 'Change Photo' : 'Add Photo'}
+                      <input type="file" accept="image/*" style={{ display:'none' }}
+                        onChange={e => handlePhotoUpload(e, form.id)}
+                        disabled={uploading} />
+                    </label>
+                    <div style={{ fontSize:11, color:'#9ca3af', marginTop:4 }}>JPG, PNG · Max 5MB</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="modal-footer">
               <button className="btn-secondary" onClick={closeModal}>Cancel</button>
               <button className="btn-primary" onClick={save} disabled={saving || !form.name.trim()}>

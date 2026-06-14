@@ -107,8 +107,8 @@ export function AppProvider({ children }) {
   // ── CRUD helpers ─────────────────────────────────────────────
   const crud = {
     // EMPLOYEES
-    addEmployee:    async (e)  => { await supabase.from('employees').insert([{ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, active:true }]); fetchAll(); },
-    updateEmployee: async (e)  => { await supabase.from('employees').update({ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar }).eq('id', e.id); fetchAll(); },
+    addEmployee:    async (e)  => { await supabase.from('employees').insert([{ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, photo_url:e.photo_url||null, active:true }]); fetchAll(); },
+    updateEmployee: async (e)  => { await supabase.from('employees').update({ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, photo_url:e.photo_url||null }).eq('id', e.id); fetchAll(); },
     deleteEmployee: async (id) => { await supabase.from('employees').delete().eq('id', id); fetchAll(); },
 
     // APPLICANTS
@@ -151,6 +151,21 @@ export function AppProvider({ children }) {
     deletePerformance: async (id) => { await supabase.from('performance').delete().eq('id', id); fetchAll(); },
   };
 
+  // ── Upload employee photo ────────────────────────────────────
+  const uploadEmployeePhoto = async (employeeId, file) => {
+    const ext = file.name.split('.').pop();
+    const path = `${employeeId}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from('employee-photos')
+      .upload(path, file, { upsert: true });
+    if (uploadError) throw new Error(uploadError.message);
+    const { data } = supabase.storage.from('employee-photos').getPublicUrl(path);
+    // Save URL to employee record
+    await supabase.from('employees').update({ photo_url: data.publicUrl }).eq('id', employeeId);
+    fetchAll();
+    return data.publicUrl;
+  };
+
   // ── Export ───────────────────────────────────────────────────
   const exportData = () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -179,6 +194,7 @@ export function AppProvider({ children }) {
     <AppContext.Provider value={{
       user, profile, loading, data, isAdmin, isSuperAdmin, getEmployee,
       ...crud,
+      uploadEmployeePhoto,
       exportData, signIn, signOut, resetPassword,
       getAllProfiles, updateUserRole, inviteUser, fetchAll,
     }}>
