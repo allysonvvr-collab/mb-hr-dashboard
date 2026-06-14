@@ -45,7 +45,7 @@ const ROLE_COLORS = { super_admin: '#7c3aed', admin: '#5db88a', user: '#6b7280' 
 function LoadingScreen() {
   return (
     <div style={{ minHeight:'100vh', background:'#0d1f16', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16 }}>
-      <img src={mbLogo} alt="MB" style={{ height:40, opacity:0.85, filter:'brightness(0) invert(1)' }} />
+      <div style={{ color:"#5db88a", fontFamily:"Manrope,sans-serif", fontWeight:900, fontSize:22 }}>MACARIO BROTHERS</div>
       <div style={{ color:'rgba(255,255,255,0.4)', fontSize:13 }}>Loading...</div>
     </div>
   );
@@ -78,7 +78,7 @@ function Dashboard() {
       {/* ── Header ── */}
       <header className="top-header">
         <div className="header-brand">
-          <img src={mbIcon} alt="MB" style={{ height:36, width:36, borderRadius:8, objectFit:'cover' }} />
+          <div style={{ width:36, height:36, borderRadius:8, background:"#5db88a", color:"#0d1f16", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:14, fontFamily:"Manrope,sans-serif" }}>MB</div>
           <div>
             <div style={{ color:'#fff', fontFamily:'Manrope,sans-serif', fontWeight:800, fontSize:15, lineHeight:1.1, letterSpacing:'-0.3px' }}>MACARIO BROTHERS</div>
             <div style={{ color:'rgba(255,255,255,0.5)', fontSize:9, letterSpacing:'0.12em', textTransform:'uppercase' }}>Lawn Care · HR</div>
