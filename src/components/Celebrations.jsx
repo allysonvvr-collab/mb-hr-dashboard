@@ -41,14 +41,14 @@ function urgencyColor(days) {
 }
 
 function urgencyLabel(days) {
-  if (days === 0)   return 'Today!';
-  if (days === 1)   return 'Tomorrow';
-  if (days <= 7)    return 'This week';
-  if (days <= 14)   return 'Next 2 weeks';
-  if (days <= 30)   return 'This month';
-  if (days <= 60)   return 'Next 2 months';
-  if (days <= 90)   return 'Next 3 months';
-  return `${Math.ceil(days / 30)}mo away`;
+  if (days === 0)  return 'Today!';
+  if (days === 1)  return 'Tomorrow';
+  if (days <= 7)   return `${days}d away`;
+  if (days <= 14)  return `${days}d away`;
+  if (days <= 30)  return `${days}d away`;
+  if (days <= 60)  return `~${Math.ceil(days/7)}wk away`;
+  if (days <= 365) return `${Math.ceil(days/30)}mo away`;
+  return `${Math.ceil(days/365)}yr away`;
 }
 
 function EventRow({ name, role, type, monthDay, days, extra }) {
