@@ -21,16 +21,16 @@ import {
 } from 'lucide-react';
 
 const TABS = [
-  { id: 'team',           label: 'Team',                      icon: Users         },
-  { id: 'hiring',         label: 'Hiring',                    icon: UserPlus      },
-  { id: 'performance',    label: 'Performance',               icon: BarChart2     },
-  { id: 'reviews',        label: 'Reviews',                   icon: Star          },
-  { id: 'timeoff',        label: 'Time Off',                  icon: Calendar      },
-  { id: 'raises',         label: 'Raises',                    icon: TrendingUp    },
-  { id: 'uniforms',       label: 'Uniforms',                  icon: Shirt         },
-  { id: 'incidents',      label: 'Incidents',                 icon: AlertTriangle },
-  { id: 'certifications', label: 'Certifications',            icon: Award         },
-  { id: 'celebrations',   label: 'Birthdays & Anniversaries', icon: Gift          },
+  { id: 'team',           label: 'Team',             shortLabel: 'Team',    icon: Users         },
+  { id: 'hiring',         label: 'Hiring',           shortLabel: 'Hiring',  icon: UserPlus      },
+  { id: 'performance',    label: 'Performance',      shortLabel: 'Perf',    icon: BarChart2     },
+  { id: 'reviews',        label: 'Reviews',          shortLabel: 'Reviews', icon: Star          },
+  { id: 'timeoff',        label: 'Time Off',         shortLabel: 'Time',    icon: Calendar      },
+  { id: 'raises',         label: 'Raises',           shortLabel: 'Raises',  icon: TrendingUp    },
+  { id: 'uniforms',       label: 'Uniforms',         shortLabel: 'Uniforms',icon: Shirt         },
+  { id: 'incidents',      label: 'Incidents',        shortLabel: 'Incidents',icon: AlertTriangle },
+  { id: 'certifications', label: 'Certifications',   shortLabel: 'Certs',   icon: Award         },
+  { id: 'celebrations',   label: 'Birthdays & Anniv',shortLabel: 'Events',  icon: Gift          },
 ];
 
 const COMPONENTS = {
@@ -41,142 +41,91 @@ const COMPONENTS = {
 };
 
 const ROLE_ICONS  = { super_admin: Crown, admin: Shield, user: User };
-const ROLE_COLORS = { super_admin: '#7c3aed', admin: '#5db88a', user: '#6b7280' };
+const ROLE_COLORS = { super_admin: '#7c3aed', admin: '#5db88a', user: '#9ca3af' };
+
+// Bottom bar shows first 4 tabs + More
+const BOTTOM_TABS = ['team', 'hiring', 'timeoff', 'incidents'];
 
 function LoadingScreen() {
   return (
     <div style={{ minHeight:'100vh', background:'#0d1f16', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16 }}>
-      <img src={mbLogo} alt="MB" style={{ height:36, width:"auto" }} />
+      <div style={{ background:'#fff', borderRadius:8, padding:'6px 12px' }}>
+        <img src={mbLogo} alt="MB" style={{ height:24, display:'block' }} />
+      </div>
       <div style={{ color:'rgba(255,255,255,0.4)', fontSize:13 }}>Loading...</div>
     </div>
   );
 }
 
 function Dashboard() {
-  const [activeTab, setActiveTab]   = useState('team');
-  const [showUsers, setShowUsers]   = useState(false);
-  const [menuOpen, setMenuOpen]     = useState(false);
+  const [activeTab, setActiveTab] = useState('team');
+  const [showUsers, setShowUsers] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const { data, profile, isSuperAdmin, exportData, signOut } = useApp();
 
   const Component = showUsers ? UserManagement : COMPONENTS[activeTab];
   const pendingTimeOff = (data.timeOff  || []).filter(t => t.status === 'Pending').length;
   const openIncidents  = (data.incidents || []).filter(i => i.status === 'Open').length;
   const RoleIcon  = ROLE_ICONS[profile?.role]  || User;
-  const roleColor = ROLE_COLORS[profile?.role] || '#6b7280';
+  const roleColor = ROLE_COLORS[profile?.role] || '#9ca3af';
 
-  const handleTabClick = (id) => {
+  const getBadge = (id) =>
+    id === 'timeoff'   && pendingTimeOff > 0 ? pendingTimeOff :
+    id === 'incidents' && openIncidents  > 0 ? openIncidents  : 0;
+
+  const goTo = (id) => {
     setActiveTab(id);
     setShowUsers(false);
-    setMenuOpen(false);
+    setDrawerOpen(false);
   };
-
-  const badge = (tabId) =>
-    (tabId === 'timeoff'   && pendingTimeOff > 0) ? pendingTimeOff :
-    (tabId === 'incidents' && openIncidents  > 0) ? openIncidents  : 0;
 
   return (
     <div className="app">
-      {/* ── Header ── */}
+
+      {/* ── Header (desktop + mobile) ── */}
       <header className="top-header">
         <div className="header-brand">
-          <div style={{ background:'#ffffff', borderRadius:7, padding:'4px 8px', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <img src={mbLogo} alt="Macario Brothers Lawn Care" style={{ height:22, width:'auto', display:'block' }} />
+          <div style={{ background:'#fff', borderRadius:7, padding:'4px 8px', display:'flex', alignItems:'center' }}>
+            <img src={mbLogo} alt="Macario Brothers" style={{ height:22, width:'auto', display:'block' }} />
           </div>
         </div>
 
         <div className="header-actions">
-          {/* Desktop: show user + action buttons */}
-          <div className="desktop-only header-user">
-            <RoleIcon size={13} color={roleColor} />
+          {/* Desktop only */}
+          <div className="desktop-only" style={{ display:'flex', alignItems:'center', gap:6, color:'rgba(255,255,255,0.6)', fontSize:12 }}>
+            <RoleIcon size={12} color={roleColor} />
             <span>{profile?.full_name || profile?.email?.split('@')[0] || 'User'}</span>
           </div>
           {isSuperAdmin && (
-            <button className="btn-header desktop-only" onClick={() => { setShowUsers(s => !s); setMenuOpen(false); }} title="User Management">
-              <Settings size={15} /><span className="btn-label"> Users</span>
+            <button className="btn-header desktop-only" onClick={() => { setShowUsers(s=>!s); setDrawerOpen(false); }} title="Users">
+              <Settings size={14} /><span className="btn-label"> Users</span>
             </button>
           )}
           <button className="btn-header desktop-only" onClick={exportData} title="Export">
-            <Download size={15} /><span className="btn-label"> Export</span>
+            <Download size={14} /><span className="btn-label"> Export</span>
           </button>
-          <button className="btn-header desktop-only" onClick={signOut} title="Sign out"
+          <button className="btn-header desktop-only" onClick={signOut}
             style={{ background:'rgba(220,38,38,0.2)', borderColor:'rgba(220,38,38,0.35)' }}>
-            <LogOut size={15} />
+            <LogOut size={14} />
           </button>
 
-          {/* Mobile: hamburger */}
-          <button className="btn-header mobile-only" onClick={() => setMenuOpen(o => !o)}
+          {/* Mobile: hamburger ONLY — no other buttons */}
+          <button className="mobile-only btn-header" onClick={() => setDrawerOpen(o=>!o)}
             style={{ padding:'6px 10px' }}>
-            {menuOpen ? <XIcon size={20} /> : <Menu size={20} />}
+            {drawerOpen ? <XIcon size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </header>
 
-      {/* ── Mobile Drawer ── */}
-      {menuOpen && (
-        <div className="mobile-drawer" onClick={() => setMenuOpen(false)}>
-          <div className="mobile-drawer-inner" onClick={e => e.stopPropagation()}>
-            {/* User info */}
-            <div style={{ padding:'16px 20px', borderBottom:'1px solid #f3f4f6', display:'flex', alignItems:'center', gap:10 }}>
-              <div style={{ width:38, height:38, borderRadius:'50%', background:'#1B3A2D', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13 }}>
-                {(profile?.full_name || profile?.email || 'U').slice(0,2).toUpperCase()}
-              </div>
-              <div>
-                <div style={{ fontWeight:600, fontSize:14 }}>{profile?.full_name || profile?.email?.split('@')[0]}</div>
-                <div style={{ fontSize:12, color:'#6b7280', display:'flex', alignItems:'center', gap:4 }}>
-                  <RoleIcon size={11} color={roleColor} />
-                  {profile?.role?.replace('_', ' ')}
-                </div>
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div style={{ padding:'8px 0', overflowY:'auto', flex:1 }}>
-              {TABS.map(t => {
-                const Icon = t.icon;
-                const b = badge(t.id);
-                const isActive = !showUsers && activeTab === t.id;
-                return (
-                  <button key={t.id} onClick={() => handleTabClick(t.id)}
-                    style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 20px', border:'none', background: isActive ? '#f0fdf4' : 'none', color: isActive ? '#1B3A2D' : '#374151', fontWeight: isActive ? 700 : 400, fontSize:14, cursor:'pointer', textAlign:'left', borderLeft: isActive ? '3px solid #1B3A2D' : '3px solid transparent' }}>
-                    <Icon size={17} />
-                    {t.label}
-                    {b > 0 && <span style={{ marginLeft:'auto', background:'#dc2626', color:'#fff', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{b}</span>}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Bottom actions */}
-            <div style={{ padding:'12px 16px', borderTop:'1px solid #f3f4f6', display:'flex', flexDirection:'column', gap:8 }}>
-              {isSuperAdmin && (
-                <button onClick={() => { setShowUsers(true); setMenuOpen(false); }}
-                  style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:8, border:'1px solid #e5e7eb', background:'#fff', fontSize:13, cursor:'pointer', color:'#374151' }}>
-                  <Settings size={15} /> User Management
-                </button>
-              )}
-              <button onClick={exportData}
-                style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:8, border:'1px solid #e5e7eb', background:'#fff', fontSize:13, cursor:'pointer', color:'#374151' }}>
-                <Download size={15} /> Export Data
-              </button>
-              <button onClick={signOut}
-                style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:8, border:'1px solid #fecaca', background:'#fef2f2', fontSize:13, cursor:'pointer', color:'#dc2626', fontWeight:600 }}>
-                <LogOut size={15} /> Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── Desktop Tab Nav ── */}
       {!showUsers && (
-        <nav className="tab-nav desktop-only">
+        <nav className="tab-nav desktop-only" style={{ display:'flex' }}>
           {TABS.map(t => {
             const Icon = t.icon;
-            const b = badge(t.id);
+            const b = getBadge(t.id);
             return (
-              <button key={t.id} className={`tab-btn ${activeTab === t.id ? 'active' : ''}`}
-                onClick={() => handleTabClick(t.id)}>
-                <Icon size={15} /> {t.label}
+              <button key={t.id} className={`tab-btn ${activeTab===t.id?'active':''}`} onClick={() => goTo(t.id)}>
+                <Icon size={14} /> {t.label}
                 {b > 0 && <span className="tab-badge">{b}</span>}
               </button>
             );
@@ -185,35 +134,87 @@ function Dashboard() {
       )}
 
       {showUsers && (
-        <div style={{ background:'#0d1f16', padding:'10px 20px', display:'flex', alignItems:'center', gap:8 }}>
-          <button onClick={() => setShowUsers(false)}
-            style={{ background:'none', border:'none', color:'rgba(255,255,255,0.6)', cursor:'pointer', fontSize:13 }}>
-            Back to Dashboard
+        <div style={{ background:'#0d1f16', padding:'8px 20px', display:'flex', alignItems:'center', gap:8 }}>
+          <button onClick={() => setShowUsers(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.6)', cursor:'pointer', fontSize:13 }}>
+            Back
           </button>
           <span style={{ color:'rgba(255,255,255,0.3)' }}>·</span>
           <span style={{ color:'#5db88a', fontSize:13, fontWeight:600 }}>User Management</span>
         </div>
       )}
 
-      {/* ── Mobile bottom tab bar ── */}
+      {/* ── Mobile Slide-in Drawer ── */}
+      {drawerOpen && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:300 }} onClick={() => setDrawerOpen(false)}>
+          <div style={{ position:'absolute', top:0, right:0, width:'75%', maxWidth:280, height:'100%', background:'#fff', display:'flex', flexDirection:'column', animation:'slideInRight 0.22s ease' }}
+            onClick={e => e.stopPropagation()}>
+
+            {/* Drawer header */}
+            <div style={{ background:'#1B3A2D', padding:'16px 20px', display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ width:36, height:36, borderRadius:'50%', background:'#5db88a', color:'#0d1f16', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:13 }}>
+                {(profile?.full_name||profile?.email||'U').slice(0,2).toUpperCase()}
+              </div>
+              <div>
+                <div style={{ color:'#fff', fontWeight:600, fontSize:13 }}>{profile?.full_name||profile?.email?.split('@')[0]}</div>
+                <div style={{ color:'rgba(255,255,255,0.5)', fontSize:11, display:'flex', alignItems:'center', gap:4 }}>
+                  <RoleIcon size={10} color={roleColor} />
+                  {(profile?.role||'user').replace('_',' ')}
+                </div>
+              </div>
+            </div>
+
+            {/* All tabs list */}
+            <div style={{ flex:1, overflowY:'auto', padding:'8px 0' }}>
+              {TABS.map(t => {
+                const Icon = t.icon;
+                const b = getBadge(t.id);
+                const isActive = !showUsers && activeTab===t.id;
+                return (
+                  <button key={t.id} onClick={() => goTo(t.id)} style={{ width:'100%', display:'flex', alignItems:'center', gap:12, padding:'12px 20px', border:'none', background:isActive?'#f0fdf4':'none', color:isActive?'#1B3A2D':'#374151', fontWeight:isActive?700:400, fontSize:14, cursor:'pointer', textAlign:'left', borderLeft:`3px solid ${isActive?'#1B3A2D':'transparent'}` }}>
+                    <Icon size={16} />
+                    {t.label}
+                    {b>0 && <span style={{ marginLeft:'auto', background:'#dc2626', color:'#fff', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{b}</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Bottom actions */}
+            <div style={{ padding:'12px 16px', borderTop:'1px solid #f3f4f6', display:'flex', flexDirection:'column', gap:8 }}>
+              {isSuperAdmin && (
+                <button onClick={() => { setShowUsers(true); setDrawerOpen(false); }} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:8, border:'1px solid #e5e7eb', background:'#fff', fontSize:13, cursor:'pointer', color:'#374151' }}>
+                  <Settings size={15} /> User Management
+                </button>
+              )}
+              <button onClick={exportData} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:8, border:'1px solid #e5e7eb', background:'#fff', fontSize:13, cursor:'pointer', color:'#374151' }}>
+                <Download size={15} /> Export Data
+              </button>
+              <button onClick={signOut} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:8, border:'1px solid #fecaca', background:'#fef2f2', fontSize:13, cursor:'pointer', color:'#dc2626', fontWeight:600 }}>
+                <LogOut size={15} /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile Bottom Tab Bar — only 4 key tabs + More ── */}
       {!showUsers && (
         <nav className="mobile-tab-bar">
-          {TABS.slice(0, 5).map(t => {
+          {BOTTOM_TABS.map(id => {
+            const t = TABS.find(x => x.id === id);
             const Icon = t.icon;
-            const b = badge(t.id);
-            const isActive = activeTab === t.id;
+            const b = getBadge(id);
+            const isActive = activeTab === id;
             return (
-              <button key={t.id} onClick={() => handleTabClick(t.id)}
-                style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding:'8px 4px', border:'none', background:'none', color: isActive ? '#5db88a' : 'rgba(255,255,255,0.45)', cursor:'pointer', position:'relative', fontSize:10, fontWeight: isActive ? 700 : 400 }}>
-                <Icon size={18} />
-                <span>{t.label.split(' ')[0]}</span>
-                {b > 0 && <span style={{ position:'absolute', top:4, right:'50%', transform:'translateX(14px)', background:'#dc2626', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 4px', borderRadius:8 }}>{b}</span>}
+              <button key={id} onClick={() => goTo(id)} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:2, padding:'8px 2px 6px', border:'none', background:'none', color:isActive?'#5db88a':'rgba(255,255,255,0.45)', cursor:'pointer', position:'relative', fontSize:10, fontWeight:isActive?700:400 }}>
+                <Icon size={19} />
+                <span>{t.shortLabel}</span>
+                {b>0 && <span style={{ position:'absolute', top:4, right:'50%', transform:'translateX(12px)', background:'#dc2626', color:'#fff', fontSize:9, fontWeight:700, padding:'1px 4px', borderRadius:8 }}>{b}</span>}
               </button>
             );
           })}
-          <button onClick={() => setMenuOpen(true)}
-            style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding:'8px 4px', border:'none', background:'none', color:'rgba(255,255,255,0.45)', cursor:'pointer', fontSize:10 }}>
-            <Menu size={18} />
+          <button onClick={() => setDrawerOpen(true)} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:2, padding:'8px 2px 6px', border:'none', background:'none', color:'rgba(255,255,255,0.45)', cursor:'pointer', fontSize:10 }}>
+            <Menu size={19} />
             <span>More</span>
           </button>
         </nav>
