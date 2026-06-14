@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Lock, Mail, Eye, EyeOff } from 'lucide-react';
-import mbIcon from '../assets/mb-icon.png';
-import mbLogo from '../assets/mb-logo.webp';
 
 export default function Login() {
   const { signIn, resetPassword } = useApp();
@@ -43,11 +41,7 @@ export default function Login() {
       }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <img
-            src={mbIcon}
-            alt="Macario Brothers"
-            style={{ width: 80, height: 80, borderRadius: 14, objectFit: 'cover', marginBottom: 14, boxShadow: '0 4px 16px rgba(27,58,45,0.2)' }}
-          />
+          <div style={{ width:80, height:80, borderRadius:14, background:"#1B3A2D", color:"#5db88a", display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, fontWeight:900, fontFamily:"Manrope,sans-serif", marginBottom:14, boxShadow:"0 4px 16px rgba(27,58,45,0.25)" }}>MB</div>
           <div style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800, fontSize: 20, color: '#1B3A2D' }}>
             Macario Brothers
           </div>
@@ -125,7 +119,7 @@ export default function Login() {
 
         {/* Bottom logo */}
         <div style={{ borderTop: '1px solid #f3f4f6', marginTop: 24, paddingTop: 16, textAlign: 'center' }}>
-          <img src={mbLogo} alt="Macario Brothers Lawn Care" style={{ height: 24, width: 'auto', opacity: 0.5 }} />
+          <div style={{ fontSize:11, color:"#9ca3af", letterSpacing:"0.05em" }}>MACARIO BROTHERS LAWN CARE</div>
         </div>
 
         <div style={{ textAlign: 'center', marginTop: 10, color: '#9ca3af', fontSize: 11 }}>

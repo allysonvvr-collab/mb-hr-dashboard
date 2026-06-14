@@ -12,7 +12,6 @@ import Incidents from './components/Incidents';
 import Certifications from './components/Certifications';
 import Celebrations from './components/Celebrations';
 import UserManagement from './components/UserManagement';
-import mbLogo from './assets/mb-logo.webp';
 import {
   Download, Users, UserPlus, BarChart2, Star,
   Calendar, TrendingUp, Shirt, AlertTriangle,
