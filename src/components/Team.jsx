@@ -99,9 +99,7 @@ export default function Team() {
 
       {/* Header row */}
       <div className="section-header">
-        <h2 className="section-title">Team 
-          <span style={{ color:'#9ca3af', fontWeight:400, fontSize:13 }}> ({filtered.filter(e=>e.role!=='Owner').length} employees{filtered.filter(e=>e.role==='Owner').length>0?`, ${filtered.filter(e=>e.role==='Owner').length} owner`:''})</span>
-        </h2>
+<h2 className="section-title">Team <span style={{ color:'#9ca3af', fontWeight:400, fontSize:13 }}>({filtered.length})</span></h2>
         <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
           <div style={{ position:'relative' }}>
             <Search size={14} style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#9ca3af' }} />
@@ -156,7 +154,7 @@ export default function Team() {
                 <div><span>Email</span><span style={{ fontSize:12 }}>{emp.email||'—'}</span></div>
                 <div><span>Start</span><span>{emp.start_date||'—'}</span></div>
                 <div><span>Birthday</span><span>{emp.birthday||'—'}</span></div>
-                <div><span>Wage</span><span style={{ color:'#1B3A2D', fontWeight:700 }}>${Number(emp.wage||0).toFixed(2)}/hr</span></div>
+                {emp.role !== 'Owner' && <div><span>Wage</span><span style={{ color:'#1B3A2D', fontWeight:700 }}>${Number(emp.wage||0).toFixed(2)}/hr</span></div>}
               </div>
 
               {isAdmin && (
@@ -204,8 +202,8 @@ export default function Team() {
               <label>Email<input style={inp} type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} placeholder="email@example.com" /></label>
               <label>Start Date<input style={inp} type="date" value={form.start_date} onChange={e=>setForm(f=>({...f,start_date:e.target.value}))} /></label>
               <label>Birthday (e.g. Jul 21)<input style={inp} value={form.birthday} onChange={e=>setForm(f=>({...f,birthday:e.target.value}))} placeholder="Jul 21" /></label>
-              <label>Wage ($/hr)<input style={inp} type="number" step="0.25" min="0" value={form.wage} onChange={e=>setForm(f=>({...f,wage:e.target.value}))} placeholder="15.00" /></label>
-              <label>Strikes (0–3)<input style={inp} type="number" min="0" max="3" value={form.strikes} onChange={e=>setForm(f=>({...f,strikes:e.target.value}))} /></label>
+              {form.role !== 'Owner' && <label>Wage ($/hr)<input style={inp} type="number" step="0.25" min="0" value={form.wage} onChange={e=>setForm(f=>({...f,wage:e.target.value}))} placeholder="15.00" /></label>}
+              {form.role !== 'Owner' && <label>Strikes (0–3)<input style={inp} type="number" min="0" max="3" value={form.strikes} onChange={e=>setForm(f=>({...f,strikes:e.target.value}))} /></label>}
             </div>
 
             <div className="modal-footer">
