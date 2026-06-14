@@ -79,10 +79,8 @@ function Dashboard() {
       {/* ── Header ── */}
       <header className="top-header">
         <div className="header-brand">
-          <div style={{ width:36, height:36, borderRadius:8, background:"#1B3A2D", color:"#5db88a", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:13, fontFamily:"Manrope,sans-serif" }}>MB</div>
-          <div>
-            <div style={{ color:'#fff', fontFamily:'Manrope,sans-serif', fontWeight:800, fontSize:15, lineHeight:1.1, letterSpacing:'-0.3px' }}>MACARIO BROTHERS</div>
-            <div style={{ color:'rgba(255,255,255,0.5)', fontSize:9, letterSpacing:'0.12em', textTransform:'uppercase' }}>Lawn Care · HR</div>
+          <div style={{ background:'#ffffff', borderRadius:8, padding:'4px 10px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <img src={mbLogo} alt="Macario Brothers Lawn Care" style={{ height:32, width:'auto', display:'block' }} />
           </div>
         </div>
 

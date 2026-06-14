@@ -137,8 +137,11 @@ export default function Team() {
     if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5MB'); return; }
     setUploading(true);
     try {
-      await uploadEmployeePhoto(empId, file);
+      const url = await uploadEmployeePhoto(empId, file);
+      // Update form state so preview refreshes immediately
+      setForm(f => ({ ...f, photo_url: url + '?t=' + Date.now() }));
     } catch (err) {
+      console.error('Upload error:', err);
       alert('Upload failed: ' + err.message);
     }
     setUploading(false);
