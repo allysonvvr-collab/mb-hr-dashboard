@@ -4,7 +4,7 @@ import { Plus, Edit2, Trash2, X, Check, Star } from 'lucide-react';
 import { todaySA } from '../lib/timezone';
 
 const STATUSES = ['Applied','Phone Screen','Interview','Offer','Hired','Rejected'];
-const ROLES    = ['Crew Leader','Crew Worker','Doorhanger Distributor'];
+const ROLES    = ['Crew Leader','Crew Worker','Doorhanger Distributor','CSR'];
 const SOURCES  = ['Indeed','Referral','Craigslist','Web Form','Walk-in','Other'];
 
 const STATUS_COLORS = {
