@@ -7,7 +7,7 @@ import { TabHeader } from './TabHeader';
 const ROLES = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker'];
 
 // Order roles appear in sections
-const ROLE_ORDER = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker'];
+const ROLE_ORDER = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker', 'Crew Member'];
 
 const ROLE_COLORS = {
   Owner:              { bg: '#7c3aed', light: '#f5f3ff', border: '#e9d5ff' },
@@ -15,6 +15,7 @@ const ROLE_COLORS = {
   'Office Manager':   { bg: '#0369a1', light: '#f0f9ff', border: '#bae6fd' },
   'Crew Leader':      { bg: '#b45309', light: '#fffbeb', border: '#fde68a' },
   'Crew Worker':      { bg: '#374151', light: '#f9fafb', border: '#e5e7eb' },
+  'Crew Member':      { bg: '#374151', light: '#f9fafb', border: '#e5e7eb' },
 };
 
 const AVATAR_COLORS = ['#1B3A2D','#224d3a','#2d6349','#0d1f16','#3a7a5c','#4d9973','#163025'];
