@@ -79,8 +79,8 @@ function Dashboard() {
       {/* ── Header ── */}
       <header className="top-header">
         <div className="header-brand">
-          <div style={{ background:'#ffffff', borderRadius:8, padding:'4px 10px', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <img src={mbLogo} alt="Macario Brothers Lawn Care" style={{ height:32, width:'auto', display:'block' }} />
+          <div style={{ background:'#ffffff', borderRadius:7, padding:'4px 8px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <img src={mbLogo} alt="Macario Brothers Lawn Care" style={{ height:22, width:'auto', display:'block' }} />
           </div>
         </div>
 
