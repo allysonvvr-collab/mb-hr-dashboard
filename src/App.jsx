@@ -85,8 +85,11 @@ function Dashboard() {
       {/* ── Header (desktop + mobile) ── */}
       <header className="top-header">
         <div className="header-brand">
-          <div style={{ background:'#fff', borderRadius:7, padding:'4px 8px', display:'flex', alignItems:'center' }}>
-            <img src={mbLogo} alt="Macario Brothers" style={{ height:22, width:'auto', display:'block' }} />
+          <div style={{ background:'#fff', borderRadius:7, padding:'3px 8px', display:'flex', alignItems:'center' }}>
+            <img src={mbLogo} alt="Macario Brothers" style={{ height:20, width:'auto', display:'block' }} />
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', lineHeight:1.1 }}>
+            <span style={{ color:'#fff', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', fontFamily:'Manrope,sans-serif' }}>HR Dashboard</span>
           </div>
         </div>
 
