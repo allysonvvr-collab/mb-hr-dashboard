@@ -53,24 +53,23 @@ function urgencyLabel(days) {
 
 function EventRow({ name, role, type, monthDay, days, extra }) {
   const colors = urgencyColor(days);
+  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   return (
-    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 16px', borderBottom:'1px solid #f3f4f6', flexWrap:'wrap', gap:8 }}>
-      <div style={{ display:'flex', gap:12, alignItems:'center' }}>
-        <div style={{ width:40, height:40, borderRadius:'50%', background:'#1B3A2D', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
-          {name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
-        </div>
-        <div>
-          <div style={{ fontWeight:600, fontSize:14 }}>{name}</div>
-          <div style={{ color:'#6b7280', fontSize:12 }}>{role} &middot; {type}{extra ? ` — ${extra}` : ''}</div>
-        </div>
+    <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom:'1px solid #f3f4f6' }}>
+      {/* Avatar */}
+      <div style={{ width:38, height:38, borderRadius:'50%', background:'#1B3A2D', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
+        {initials}
       </div>
-      <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <div style={{ textAlign:'right' }}>
-          <div style={{ fontWeight:700, fontSize:13, color:'#1B3A2D' }}>{monthDay}</div>
-          <div style={{ fontSize:12, color:'#6b7280' }}>{days === 0 ? 'Today!' : days === 1 ? 'Tomorrow' : `${days}d away`}</div>
-        </div>
-        <span style={{ background:colors.bg, border:`1px solid ${colors.border}`, color:colors.text, fontSize:11, fontWeight:600, padding:'3px 8px', borderRadius:20, whiteSpace:'nowrap' }}>
-          {urgencyLabel(days)}
+      {/* Name + role */}
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontWeight:600, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{name}</div>
+        <div style={{ color:'#6b7280', fontSize:12, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{role} · {type}{extra ? ` · ${extra}` : ''}</div>
+      </div>
+      {/* Date + badge — always on right, never wraps */}
+      <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3, flexShrink:0 }}>
+        <div style={{ fontWeight:700, fontSize:13, color:'#1B3A2D', whiteSpace:'nowrap' }}>{monthDay}</div>
+        <span style={{ background:colors.bg, border:`1px solid ${colors.border}`, color:colors.text, fontSize:10, fontWeight:600, padding:'2px 7px', borderRadius:20, whiteSpace:'nowrap' }}>
+          {days === 0 ? 'Today!' : days === 1 ? 'Tomorrow' : urgencyLabel(days)}
         </span>
       </div>
     </div>
@@ -173,14 +172,6 @@ export default function Celebrations() {
         </div>
       </div>
 
-      {/* Resend email note */}
-      <div style={{ marginTop:28, background:'#f9fafb', border:'1px solid #e5e7eb', borderRadius:10, padding:16, fontSize:13, color:'#6b7280' }}>
-        <strong style={{ color:'#374151' }}>Automated Alerts</strong>
-        <p style={{ marginTop:4 }}>
-          Email alerts via Resend can be set up to notify you automatically 7 days before each birthday and anniversary.
-          Ask your developer to configure the Resend API key in Netlify environment variables — the alert logic is already built in.
-        </p>
-      </div>
-    </div>
+          </div>
   );
 }
