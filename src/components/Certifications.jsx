@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import Avatar from './Avatar';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
 import { TabHeader } from './TabHeader';
 
@@ -33,6 +34,7 @@ export default function Certifications() {
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                 <div style={{ flex:1 }}>
                   <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:3 }}>
+                    <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={32} />
                     <strong style={{ fontSize:14 }}>{emp?.name||'—'}</strong>
                     <span style={{ background:sc+'18', color:sc, border:`1px solid ${sc}40`, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{c.status}</span>
                   </div>

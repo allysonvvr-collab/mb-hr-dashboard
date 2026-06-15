@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import Avatar from './Avatar';
 import { Plus, Trash2, X, Check, TrendingUp } from 'lucide-react';
 import { todaySA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
@@ -42,7 +43,10 @@ export default function Raises() {
             <div key={r.id} className="list-card">
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontWeight:700, fontSize:14, marginBottom:2 }}>{emp?.name||'—'}</div>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                    <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={32} />
+                    <span style={{ fontWeight:700, fontSize:14 }}>{emp?.name||'—'}</span>
+                  </div>
                   <div style={{ fontSize:12, color:'#6b7280', marginBottom:4 }}>{r.raise_date}</div>
                   <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
                     <span style={{ fontSize:13, color:'#6b7280' }}>${Number(r.previous_rate).toFixed(2)}</span>

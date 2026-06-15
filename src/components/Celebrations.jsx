@@ -51,15 +51,13 @@ function urgencyLabel(days) {
   return `${Math.ceil(days/365)}yr away`;
 }
 
-function EventRow({ name, role, type, monthDay, days, extra }) {
+function EventRow({ name, role, type, monthDay, days, extra, photoUrl }) {
   const colors = urgencyColor(days);
   const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   return (
     <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom:'1px solid #f3f4f6' }}>
       {/* Avatar */}
-      <div style={{ width:38, height:38, borderRadius:'50%', background:'#1B3A2D', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
-        {initials}
-      </div>
+      <Avatar name={name} photoUrl={photoUrl} size={38} />
       {/* Name + role */}
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ fontWeight:600, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{name}</div>
@@ -78,6 +76,7 @@ function EventRow({ name, role, type, monthDay, days, extra }) {
 
 export default function Celebrations() {
   const { data } = useApp();
+  const empByName = (name) => (data.employees||[]).find(e=>e.name===name);
   const employees = data.employees || [];
 
   // Collect upcoming birthdays (next 30 days)

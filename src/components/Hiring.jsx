@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, X, Check, Star } from 'lucide-react';
 import { todaySA } from '../lib/timezone';
+import Avatar from './Avatar';
 
 const STATUSES = ['Applied','Phone Screen','Interview','Offer','Hired','Rejected'];
 const ROLES    = ['Crew Leader','Crew Worker','Doorhanger Distributor','CSR'];
@@ -113,9 +114,7 @@ export default function Hiring() {
                 <div style={{ flex:1, minWidth:0 }}>
                   {/* Name + status */}
                   <div style={{ display:'flex', gap:7, alignItems:'center', flexWrap:'wrap', marginBottom:4 }}>
-                    <div style={{ width:34, height:34, borderRadius:'50%', background:'#1B3A2D', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:12, flexShrink:0 }}>
-                      {app.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
-                    </div>
+                    <Avatar name={app.name} size={34} />
                     <div>
                       <div style={{ fontWeight:700, fontSize:14 }}>{app.name}</div>
                       <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginTop:2 }}>

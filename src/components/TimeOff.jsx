@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import Avatar from './Avatar';
 import { Plus, Trash2, X, Check, Clock } from 'lucide-react';
 import { todaySA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';

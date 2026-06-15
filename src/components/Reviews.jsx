@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import Avatar from './Avatar';
 import { todaySA } from '../lib/timezone';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
 import { TabHeader } from './TabHeader';
@@ -38,6 +39,7 @@ export default function Reviews() {
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                 <div>
                   <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:8, flexWrap:'wrap' }}>
+                    <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={36} />
                     <strong>{emp?.name||'—'}</strong>
                     <span style={{ color:'#6b7280', fontSize:13 }}>{emp?.role}</span>
                     <span style={{ color:'#6b7280', fontSize:13 }}>{rev.review_date}</span>

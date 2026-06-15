@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import Avatar from './Avatar';
 import { Plus, Edit2, Trash2, X, Check, ChevronDown, ChevronUp, AlertTriangle, DollarSign, User } from 'lucide-react';
 import { todaySA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
@@ -16,9 +17,7 @@ function EmployeeSummaryCard({ emp, incidents, onViewAll }) {
     <div className="emp-card" style={{ cursor:'pointer', borderLeft:`3px solid ${hasOpen?'#f59e0b':'#e5e7eb'}` }} onClick={onViewAll}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
         <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-          <div style={{ width:38, height:38, borderRadius:'50%', background:'#1B3A2D', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
-            {(emp.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
-          </div>
+          <Avatar name={emp.name} photoUrl={emp.photo_url} size={38} />
           <div>
             <div style={{ fontWeight:700, fontSize:14 }}>{emp.name}</div>
             <div style={{ fontSize:12, color:'#6b7280' }}>{emp.role}</div>
@@ -190,6 +189,7 @@ export default function Incidents() {
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:4 }}>
+                        <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={32} />
                         <strong style={{ fontSize:14 }}>{emp?.name||'—'}</strong>
                         <span style={{ fontSize:12, color:'#6b7280' }}>{inc.incident_date}</span>
                         <span style={{ fontWeight:800, color:'#dc2626', fontSize:14, fontFamily:'Manrope,sans-serif' }}>${Number(inc.cost).toLocaleString()}</span>

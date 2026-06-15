@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import Avatar from './Avatar';
 import { Plus, Trash2, X, Check } from 'lucide-react';
 import { TabHeader } from './TabHeader';
 const empty = { employeeId:'', month:'', jobsCompleted:'', complaints:0, rating:4 };
@@ -22,7 +23,12 @@ export default function Performance() {
               const emp = getEmployee(p.employee_id);
               return (
                 <tr key={p.id}>
-                  <td><strong>{emp?.name||'—'}</strong><br/><small style={{ color:'#6b7280' }}>{emp?.role}</small></td>
+                  <td>
+                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={30} />
+                      <div><div style={{ fontWeight:600 }}>{emp?.name||'—'}</div><div style={{ fontSize:11, color:'#6b7280' }}>{emp?.role}</div></div>
+                    </div>
+                  </td>
                   <td>{p.month}</td>
                   <td style={{ fontWeight:600 }}>{p.jobs_completed}</td>
                   <td style={{ color:p.complaints>0?'#dc2626':'#16a34a', fontWeight:600 }}>{p.complaints}</td>
