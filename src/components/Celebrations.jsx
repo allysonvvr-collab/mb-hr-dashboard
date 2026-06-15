@@ -1,4 +1,5 @@
 import { useApp } from '../context/AppContext';
+import Avatar from './Avatar';
 import { nowSA } from '../lib/timezone';
 
 function daysUntil(monthDay, yearOverride) {
@@ -76,7 +77,6 @@ function EventRow({ name, role, type, monthDay, days, extra, photoUrl }) {
 
 export default function Celebrations() {
   const { data } = useApp();
-  const empByName = (name) => (data.employees||[]).find(e=>e.name===name);
   const employees = data.employees || [];
 
   // Collect upcoming birthdays (next 30 days)
@@ -138,7 +138,7 @@ export default function Celebrations() {
           </h3>
           <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
             {allUpcoming.map((e, i) => (
-              <EventRow key={`${e.id}-${e.type}-${i}`} name={e.name} role={e.role} type={e.type} monthDay={e.monthDay} days={e.days} extra={e.extra} />
+              <EventRow key={`${e.id}-${e.type}-${i}`} name={e.name} role={e.role} type={e.type} monthDay={e.monthDay} days={e.days} extra={e.extra} photoUrl={e.photo_url} />
             ))}
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function Celebrations() {
           <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
             {allBirthdays.length === 0 && <div className="empty-state">No birthdays on file. Add them in the Team tab.</div>}
             {allBirthdays.map((e, i) => (
-              <EventRow key={`bday-${e.id}-${i}`} name={e.name} role={e.role} type="Birthday" monthDay={e.info.monthDay} days={e.info.days} />
+              <EventRow key={`bday-${e.id}-${i}`} name={e.name} role={e.role} type="Birthday" monthDay={e.info.monthDay} days={e.info.days} photoUrl={e.photo_url} />
             ))}
           </div>
         </div>
@@ -165,7 +165,7 @@ export default function Celebrations() {
           <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
             {allAnniversaries.length === 0 && <div className="empty-state">No anniversaries on file. Add start dates in the Team tab.</div>}
             {allAnniversaries.map((e, i) => (
-              <EventRow key={`ann-${e.id}-${i}`} name={e.name} role={e.role} type="Anniversary" monthDay={e.info.monthDay} days={e.info.days} extra={`${e.info.years} yr${e.info.years !== 1 ? 's' : ''}`} />
+              <EventRow key={`ann-${e.id}-${i}`} name={e.name} role={e.role} type="Anniversary" monthDay={e.info.monthDay} days={e.info.days} extra={`${e.info.years} yr${e.info.years !== 1 ? 's' : ''}`} photoUrl={e.photo_url} />
             ))}
           </div>
         </div>
