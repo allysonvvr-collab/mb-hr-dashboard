@@ -261,16 +261,24 @@ export default function Hiring() {
               <button className="btn-icon" onClick={()=>setBlModal(false)}><X size={18}/></button>
             </div>
             <p style={{ fontSize:13, color:'#6b7280', marginBottom:16 }}>This person will be flagged internally and won't appear in the hiring pipeline.</p>
-            <div className="form-grid">
-              <label>Full Name <span style={{ color:'#dc2626' }}>*</span><input style={inp} value={blForm.name} onChange={e=>setBlForm(f=>({...f,name:e.target.value}))} placeholder="Full name" /></label>
-              <label>Position (optional)
+            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+              <label style={{ display:'flex', flexDirection:'column', gap:5, fontSize:13, fontWeight:600, color:'#374151' }}>
+                Full Name <span style={{ color:'#dc2626', fontSize:11 }}>Required</span>
+                <input style={inp} value={blForm.name} onChange={e=>setBlForm(f=>({...f,name:e.target.value}))} placeholder="e.g. John Doe" />
+              </label>
+              <label style={{ display:'flex', flexDirection:'column', gap:5, fontSize:13, fontWeight:600, color:'#374151' }}>
+                Position <span style={{ color:'#9ca3af', fontSize:11, fontWeight:400 }}>Optional</span>
                 <select style={inp} value={blForm.position} onChange={e=>setBlForm(f=>({...f,position:e.target.value}))}>
                   <option value="">Select position...</option>
                   {ROLES.map(r=><option key={r}>{r}</option>)}
                 </select>
               </label>
-              <label style={{ gridColumn:'1/-1' }}>Phone (optional)<input style={inp} value={blForm.phone} onChange={e=>setBlForm(f=>({...f,phone:e.target.value}))} placeholder="(555) 000-0000" /></label>
-              <label style={{ gridColumn:'1/-1' }}>Reason / Notes <span style={{ color:'#dc2626' }}>*</span>
+              <label style={{ display:'flex', flexDirection:'column', gap:5, fontSize:13, fontWeight:600, color:'#374151' }}>
+                Phone <span style={{ color:'#9ca3af', fontSize:11, fontWeight:400 }}>Optional</span>
+                <input style={inp} value={blForm.phone} onChange={e=>setBlForm(f=>({...f,phone:e.target.value}))} placeholder="(555) 000-0000" />
+              </label>
+              <label style={{ display:'flex', flexDirection:'column', gap:5, fontSize:13, fontWeight:600, color:'#374151' }}>
+                Reason / Notes <span style={{ color:'#dc2626', fontSize:11 }}>Required</span>
                 <textarea value={blForm.reason} onChange={e=>setBlForm(f=>({...f,reason:e.target.value}))} rows={3} style={{ ...inp, resize:'none' }} placeholder="Why are they blacklisted?" />
               </label>
             </div>
