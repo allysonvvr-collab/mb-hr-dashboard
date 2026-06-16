@@ -9,7 +9,7 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [data, setData]       = useState({
     employees: [], applicants: [], timeOff: [], raises: [],
-    incidents: [], certifications: [], uniforms: [], reviews: [], performance: []
+    incidents: [], certifications: [], uniforms: [], reviews: [], performance: [], blacklist: []
   });
 
   // ── Auth listener ────────────────────────────────────────────
@@ -65,7 +65,7 @@ export function AppProvider({ children }) {
     fetchAll();
 
     // Real-time subscriptions
-    const tables = ['employees','applicants','time_off','raises','incidents','certifications','uniforms','reviews','performance'];
+    const tables = ['employees','applicants','time_off','raises','incidents','certifications','uniforms','reviews','performance','blacklist'];
     const channels = tables.map(t =>
       supabase.channel(`rt-${t}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: t }, () => fetchAll())
@@ -75,7 +75,7 @@ export function AppProvider({ children }) {
   }, [user]);
 
   const fetchAll = async () => {
-    const [emp, app, to, ra, inc, cert, uni, rev, perf] = await Promise.all([
+    const [emp, app, to, ra, inc, cert, uni, rev, perf, bl] = await Promise.all([
       supabase.from('employees').select('*').order('name'),
       supabase.from('applicants').select('*').order('applied_date', { ascending: false }),
       supabase.from('time_off').select('*').order('created_at', { ascending: false }),
@@ -85,6 +85,7 @@ export function AppProvider({ children }) {
       supabase.from('uniforms').select('*').order('created_at', { ascending: false }),
       supabase.from('reviews').select('*').order('review_date', { ascending: false }),
       supabase.from('performance').select('*').order('month', { ascending: false }),
+      supabase.from('blacklist').select('*').order('created_at', { ascending: false }),
     ]);
     setData({
       employees:      emp.data  || [],
@@ -96,6 +97,7 @@ export function AppProvider({ children }) {
       uniforms:       uni.data  || [],
       reviews:        rev.data  || [],
       performance:    perf.data || [],
+      blacklist:      bl.data   || [],
     });
   };
 
@@ -154,6 +156,10 @@ export function AppProvider({ children }) {
     addPerformance:    async (p)  => { await supabase.from('performance').insert([{ employee_id:parseInt(p.employeeId), month:p.month, jobs_completed:p.jobsCompleted, complaints:p.complaints, rating:p.rating }]); fetchAll(); },
     updatePerformance: async (p)  => { await supabase.from('performance').update({ month:p.month, jobs_completed:p.jobsCompleted, complaints:p.complaints, rating:p.rating }).eq('id', p.id); fetchAll(); },
     deletePerformance: async (id) => { await supabase.from('performance').delete().eq('id', id); fetchAll(); },
+
+    // BLACKLIST
+    addBlacklist:    async (b)  => { await supabase.from('blacklist').insert([{ name:b.name, position:b.position||null, phone:b.phone||null, reason:b.reason||null }]); fetchAll(); },
+    deleteBlacklist: async (id) => { await supabase.from('blacklist').delete().eq('id', id); fetchAll(); },
   };
 
   // ── Upload employee photo ────────────────────────────────────
@@ -201,6 +207,7 @@ export function AppProvider({ children }) {
       ...crud,
       uploadEmployeePhoto,
       exportData, signIn, signOut, resetPassword,
+      addBlacklist, deleteBlacklist,
       getAllProfiles, updateUserRole, inviteUser, fetchAll,
     }}>
       {children}

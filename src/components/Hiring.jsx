@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Edit2, Trash2, X, Check, Star, Ban, AlertOctagon } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Star, Ban } from 'lucide-react';
 import { todaySA } from '../lib/timezone';
 import Avatar from './Avatar';
 
@@ -31,34 +31,17 @@ function StarRating({ value, onChange }) {
 }
 
 const emptyApp = { name:'', role:'Crew Worker', phone:'', email:'', applied:todaySA(), status:'Applied', source:'Indeed', stars:3, notes:'' };
-const emptyBlacklist = { name:'', phone:'', reason:'', date:todaySA() };
+const emptyBL  = { name:'', position:'', phone:'', reason:'' };
 
 export default function Hiring() {
-  const { data, addApplicant, updateApplicant, deleteApplicant, isAdmin } = useApp();
-  const [tab, setTab]               = useState('pipeline'); // 'pipeline' | 'blacklist'
-  const [modal, setModal]           = useState(null);
-  const [form, setForm]             = useState(emptyApp);
+  const { data, addApplicant, updateApplicant, deleteApplicant, addBlacklist, deleteBlacklist, isAdmin } = useApp();
+  const [activeView, setActiveView]     = useState('applicants'); // 'applicants' | 'blacklist'
+  const [modal, setModal]               = useState(null);
+  const [blModal, setBlModal]           = useState(false);
+  const [form, setForm]                 = useState(emptyApp);
+  const [blForm, setBlForm]             = useState(emptyBL);
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterRole, setFilterRole]     = useState('All');
-
-  // Blacklist stored in localStorage (no DB table needed — simple & fast)
-  const [blacklist, setBlacklist]   = useState(() => {
-    try { return JSON.parse(localStorage.getItem('mb_blacklist') || '[]'); } catch { return []; }
-  });
-  const [blModal, setBlModal]       = useState(null); // null | 'add' | item
-  const [blForm, setBlForm]         = useState(emptyBlacklist);
-
-  const saveBlacklist = (list) => {
-    setBlacklist(list);
-    localStorage.setItem('mb_blacklist', JSON.stringify(list));
-  };
-  const addToBlacklist = () => {
-    const item = { ...blForm, id: Date.now() };
-    saveBlacklist([...blacklist, item]);
-    setBlModal(null);
-    setBlForm(emptyBlacklist);
-  };
-  const removeFromBlacklist = (id) => saveBlacklist(blacklist.filter(x => x.id !== id));
 
   const openEdit = (a) => { setForm({ ...a, applied:a.applied_date }); setModal(a); };
   const closeModal = () => setModal(null);
@@ -67,8 +50,15 @@ export default function Hiring() {
     if (modal==='add') addApplicant(a); else updateApplicant(a);
     closeModal();
   };
+  const saveBlacklist = () => {
+    addBlacklist(blForm);
+    setBlForm(emptyBL);
+    setBlModal(false);
+  };
 
   const allApps = data.applicants || [];
+  const blacklist = data.blacklist || [];
+
   const statusCounts = {};
   STATUSES.forEach(s => { statusCounts[s] = allApps.filter(a=>a.status===s).length; });
   const roleCounts = {};
@@ -80,21 +70,35 @@ export default function Hiring() {
 
   return (
     <div>
-      {/* Top tab switcher — Pipeline vs Blacklist */}
-      <div style={{ display:'flex', gap:8, marginBottom:16, borderBottom:'1px solid #e5e7eb', paddingBottom:0 }}>
-        <button onClick={()=>setTab('pipeline')} style={{ padding:'8px 16px', border:'none', background:'none', fontSize:13, fontWeight:700, cursor:'pointer', color:tab==='pipeline'?'#1B3A2D':'#6b7280', borderBottom:tab==='pipeline'?'2px solid #1B3A2D':'2px solid transparent', marginBottom:-1 }}>
-          Applicant Pipeline
-          <span style={{ marginLeft:6, background:'#f3f4f6', color:'#374151', fontSize:11, fontWeight:600, padding:'1px 6px', borderRadius:10 }}>{allApps.length}</span>
+      {/* Main view toggle: Applicants vs Blacklist */}
+      <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center' }}>
+        <button onClick={()=>setActiveView('applicants')}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:activeView==='applicants'?'#1B3A2D':'#f3f4f6', color:activeView==='applicants'?'#fff':'#374151' }}>
+          Applicants
+          <span style={{ background:activeView==='applicants'?'rgba(255,255,255,0.25)':'#e5e7eb', color:activeView==='applicants'?'#fff':'#6b7280', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{allApps.length}</span>
         </button>
-        <button onClick={()=>setTab('blacklist')} style={{ padding:'8px 16px', border:'none', background:'none', fontSize:13, fontWeight:700, cursor:'pointer', color:tab==='blacklist'?'#dc2626':'#6b7280', borderBottom:tab==='blacklist'?'2px solid #dc2626':'2px solid transparent', marginBottom:-1, display:'flex', alignItems:'center', gap:6 }}>
-          <Ban size={14} />
-          Blacklist
-          {blacklist.length > 0 && <span style={{ background:'#fee2e2', color:'#dc2626', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{blacklist.length}</span>}
+        <button onClick={()=>setActiveView('blacklist')}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:activeView==='blacklist'?'#dc2626':'#f3f4f6', color:activeView==='blacklist'?'#fff':'#374151' }}>
+          <Ban size={14} /> Blacklist
+          {blacklist.length > 0 && <span style={{ background:activeView==='blacklist'?'rgba(255,255,255,0.25)':'#fee2e2', color:activeView==='blacklist'?'#fff':'#dc2626', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{blacklist.length}</span>}
         </button>
+        <div style={{ marginLeft:'auto' }}>
+          {activeView==='applicants' && isAdmin && (
+            <button className="btn-primary" onClick={()=>{ setForm(emptyApp); setModal('add'); }}>
+              <Plus size={14}/> Add Applicant
+            </button>
+          )}
+          {activeView==='blacklist' && isAdmin && (
+            <button style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:'#dc2626', color:'#fff' }}
+              onClick={()=>{ setBlForm(emptyBL); setBlModal(true); }}>
+              <Plus size={14}/> Add to Blacklist
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* ── PIPELINE TAB ── */}
-      {tab === 'pipeline' && (
+      {/* ── APPLICANTS VIEW ── */}
+      {activeView==='applicants' && (
         <>
           {/* Status filter */}
           <div style={{ marginBottom:10 }}>
@@ -108,32 +112,27 @@ export default function Hiring() {
                 return (
                   <button key={s} onClick={()=>setFilterStatus(s)}
                     style={{ padding:'4px 10px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:active?(s==='All'?'#1B3A2D':color):'#fff', color:active?'#fff':(s==='All'?'#374151':color), borderColor:active?(s==='All'?'#1B3A2D':color):(s==='All'?'#e5e7eb':color+'60') }}>
-                    {s} {count>0&&`(${count})`}
+                    {s} ({count})
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Role filter + Add button */}
-          <div style={{ marginBottom:14 }}>
-            <div style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:6 }}>Role</div>
-            <div style={{ display:'flex', gap:5, flexWrap:'wrap', alignItems:'center' }}>
+          {/* Role filter */}
+          <div style={{ marginBottom:16 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:6 }}>Position</div>
+            <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
               {['All',...ROLES].map(r => {
                 const active = filterRole===r;
                 const count  = r==='All'?allApps.length:roleCounts[r]||0;
                 return (
                   <button key={r} onClick={()=>setFilterRole(r)}
                     style={{ padding:'4px 10px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:active?'#1B3A2D':'#fff', color:active?'#fff':'#374151', borderColor:active?'#1B3A2D':'#e5e7eb' }}>
-                    {r} {count>0&&`(${count})`}
+                    {r} ({count})
                   </button>
                 );
               })}
-              {isAdmin && (
-                <button className="btn-primary" style={{ marginLeft:'auto' }} onClick={()=>{ setForm(emptyApp); setModal('add'); }}>
-                  <Plus size={14}/> Add Applicant
-                </button>
-              )}
             </div>
           </div>
 
@@ -146,22 +145,22 @@ export default function Hiring() {
                 <div key={app.id} className="list-card">
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                      <div style={{ display:'flex', gap:10, alignItems:'flex-start', marginBottom:6 }}>
                         <Avatar name={app.name} size={38} />
-                        <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ minWidth:0 }}>
                           <div style={{ fontWeight:700, fontSize:14, marginBottom:3 }}>{app.name}</div>
-                          <div style={{ display:'flex', gap:5, flexWrap:'wrap', marginBottom:4 }}>
+                          <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
                             <span style={{ background:sc+'18', color:sc, border:`1px solid ${sc}40`, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{app.status}</span>
                             <span style={{ background:'#f3f4f6', color:'#374151', fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:20 }}>{app.role}</span>
                             {app.source && <span style={{ background:srcColor+'15', color:srcColor, border:`1px solid ${srcColor}30`, fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:20 }}>{app.source}</span>}
                           </div>
-                          <div style={{ fontSize:12, color:'#6b7280', marginBottom:4 }}>
-                            {app.phone && <span>{app.phone} · </span>}{app.email && <span>{app.email} · </span>}Applied {app.applied_date}
-                          </div>
-                          <StarRating value={app.stars} />
-                          {app.notes && <div style={{ fontSize:13, color:'#374151', fontStyle:'italic', marginTop:4 }}>{app.notes}</div>}
                         </div>
                       </div>
+                      <div style={{ fontSize:12, color:'#6b7280', marginBottom:4 }}>
+                        {app.phone&&<span>{app.phone} · </span>}{app.email&&<span>{app.email} · </span>}Applied {app.applied_date}
+                      </div>
+                      <div style={{ marginBottom:app.notes?4:0 }}><StarRating value={app.stars} /></div>
+                      {app.notes && <div style={{ fontSize:13, color:'#374151', fontStyle:'italic' }}>{app.notes}</div>}
                     </div>
                     {isAdmin && (
                       <div style={{ display:'flex', flexDirection:'column', gap:5, flexShrink:0 }}>
@@ -178,61 +177,55 @@ export default function Hiring() {
         </>
       )}
 
-      {/* ── BLACKLIST TAB ── */}
-      {tab === 'blacklist' && (
+      {/* ── BLACKLIST VIEW ── */}
+      {activeView==='blacklist' && (
         <>
           <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, padding:'12px 16px', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
-            <AlertOctagon size={16} color="#dc2626" style={{ flexShrink:0 }} />
-            <span style={{ fontSize:13, color:'#991b1b' }}>
-              <strong>Blacklisted individuals</strong> — Do not hire. Kept separate from the applicant pipeline.
-            </span>
-          </div>
-
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-            <h2 className="section-title">Blacklist <span style={{ color:'#9ca3af', fontWeight:400, fontSize:13 }}>({blacklist.length})</span></h2>
-            {isAdmin && (
-              <button onClick={()=>{ setBlForm(emptyBlacklist); setBlModal('add'); }}
-                style={{ display:'flex', alignItems:'center', gap:6, background:'#dc2626', color:'#fff', border:'none', padding:'8px 14px', borderRadius:8, fontSize:13, fontWeight:600, cursor:'pointer' }}>
-                <Ban size={14}/> Add to Blacklist
-              </button>
-            )}
+            <Ban size={16} color="#dc2626" style={{ flexShrink:0 }} />
+            <div>
+              <div style={{ fontWeight:700, fontSize:13, color:'#dc2626' }}>Blacklisted Individuals</div>
+              <div style={{ fontSize:12, color:'#6b7280', marginTop:1 }}>These people will NOT appear in the applicant pipeline. Internal use only.</div>
+            </div>
           </div>
 
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-            {blacklist.length === 0 && (
-              <div className="empty-state">No one on the blacklist.</div>
-            )}
-            {blacklist.map(person => (
-              <div key={person.id} className="list-card" style={{ borderLeft:'3px solid #dc2626' }}>
+            {blacklist.map(b => (
+              <div key={b.id} className="list-card" style={{ borderLeft:'3px solid #dc2626' }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
-                  <div style={{ display:'flex', gap:10, alignItems:'center', flex:1, minWidth:0 }}>
-                    <div style={{ width:40, height:40, borderRadius:'50%', background:'#fee2e2', color:'#dc2626', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
-                      {person.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
-                    </div>
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontWeight:700, fontSize:14, marginBottom:2 }}>{person.name}</div>
-                      {person.phone && <div style={{ fontSize:12, color:'#6b7280', marginBottom:2 }}>{person.phone}</div>}
-                      {person.reason && (
-                        <div style={{ fontSize:13, color:'#991b1b', background:'#fef2f2', padding:'4px 10px', borderRadius:6, display:'inline-block', marginTop:2 }}>
-                          {person.reason}
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:4 }}>
+                      <div style={{ width:38, height:38, borderRadius:'50%', background:'#fee2e2', color:'#dc2626', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
+                        {b.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:14 }}>{b.name}</div>
+                        <div style={{ display:'flex', gap:6, marginTop:2 }}>
+                          {b.position && <span style={{ background:'#f3f4f6', color:'#374151', fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:20 }}>{b.position}</span>}
+                          {b.phone && <span style={{ fontSize:12, color:'#6b7280' }}>{b.phone}</span>}
                         </div>
-                      )}
-                      {person.date && <div style={{ fontSize:11, color:'#9ca3af', marginTop:4 }}>Added {person.date}</div>}
+                      </div>
                     </div>
+                    {b.reason && (
+                      <div style={{ fontSize:13, color:'#374151', background:'#fef2f2', padding:'8px 10px', borderRadius:6, marginTop:4 }}>
+                        <strong style={{ color:'#dc2626', fontSize:11, textTransform:'uppercase', letterSpacing:'0.04em' }}>Reason: </strong>{b.reason}
+                      </div>
+                    )}
+                    <div style={{ fontSize:11, color:'#9ca3af', marginTop:6 }}>Added {b.created_at?.split('T')[0]}</div>
                   </div>
                   {isAdmin && (
-                    <button className="btn-icon danger" onClick={()=>removeFromBlacklist(person.id)} title="Remove from blacklist">
+                    <button className="btn-icon danger" onClick={()=>deleteBlacklist(b.id)} title="Remove from blacklist">
                       <Trash2 size={13}/>
                     </button>
                   )}
                 </div>
               </div>
             ))}
+            {blacklist.length===0 && <div className="empty-state">No one on the blacklist.</div>}
           </div>
         </>
       )}
 
-      {/* ── Applicant Add/Edit Modal ── */}
+      {/* Applicant Add/Edit Modal */}
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
@@ -242,7 +235,7 @@ export default function Hiring() {
             </div>
             <div className="form-grid">
               <label>Full Name<input style={inp} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Full name" /></label>
-              <label>Role<select style={inp} value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))}>{ROLES.map(r=><option key={r}>{r}</option>)}</select></label>
+              <label>Position<select style={inp} value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))}>{ROLES.map(r=><option key={r}>{r}</option>)}</select></label>
               <label>Source<select style={inp} value={form.source||'Indeed'} onChange={e=>setForm(f=>({...f,source:e.target.value}))}>{SOURCES.map(s=><option key={s}>{s}</option>)}</select></label>
               <label>Status<select style={inp} value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></label>
               <label>Phone<input style={inp} value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} placeholder="(555) 000-0000" /></label>
@@ -259,27 +252,32 @@ export default function Hiring() {
         </div>
       )}
 
-      {/* ── Blacklist Add Modal ── */}
+      {/* Blacklist Add Modal */}
       {blModal && (
-        <div className="modal-overlay" onClick={()=>setBlModal(null)}>
+        <div className="modal-overlay" onClick={()=>setBlModal(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
               <h3 style={{ color:'#dc2626', display:'flex', alignItems:'center', gap:8 }}><Ban size={18}/> Add to Blacklist</h3>
-              <button className="btn-icon" onClick={()=>setBlModal(null)}><X size={18}/></button>
+              <button className="btn-icon" onClick={()=>setBlModal(false)}><X size={18}/></button>
             </div>
-            <p style={{ fontSize:13, color:'#6b7280', marginBottom:14 }}>This person will be kept separate from the applicant pipeline.</p>
+            <p style={{ fontSize:13, color:'#6b7280', marginBottom:16 }}>This person will be flagged internally and won't appear in the hiring pipeline.</p>
             <div className="form-grid">
-              <label>Full Name<input style={inp} value={blForm.name} onChange={e=>setBlForm(f=>({...f,name:e.target.value}))} placeholder="Full name" /></label>
-              <label>Phone (optional)<input style={inp} value={blForm.phone} onChange={e=>setBlForm(f=>({...f,phone:e.target.value}))} placeholder="(555) 000-0000" /></label>
-              <label style={{ gridColumn:'1/-1' }}>Reason for Blacklist
-                <textarea value={blForm.reason} onChange={e=>setBlForm(f=>({...f,reason:e.target.value}))} rows={3} style={{ ...inp, resize:'none' }} placeholder="e.g. No-showed twice, theft, aggressive behavior..." />
+              <label>Full Name <span style={{ color:'#dc2626' }}>*</span><input style={inp} value={blForm.name} onChange={e=>setBlForm(f=>({...f,name:e.target.value}))} placeholder="Full name" /></label>
+              <label>Position (optional)
+                <select style={inp} value={blForm.position} onChange={e=>setBlForm(f=>({...f,position:e.target.value}))}>
+                  <option value="">Select position...</option>
+                  {ROLES.map(r=><option key={r}>{r}</option>)}
+                </select>
               </label>
-              <label>Date Added<input style={inp} type="date" value={blForm.date} onChange={e=>setBlForm(f=>({...f,date:e.target.value}))} /></label>
+              <label style={{ gridColumn:'1/-1' }}>Phone (optional)<input style={inp} value={blForm.phone} onChange={e=>setBlForm(f=>({...f,phone:e.target.value}))} placeholder="(555) 000-0000" /></label>
+              <label style={{ gridColumn:'1/-1' }}>Reason / Notes <span style={{ color:'#dc2626' }}>*</span>
+                <textarea value={blForm.reason} onChange={e=>setBlForm(f=>({...f,reason:e.target.value}))} rows={3} style={{ ...inp, resize:'none' }} placeholder="Why are they blacklisted?" />
+              </label>
             </div>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={()=>setBlModal(null)}>Cancel</button>
-              <button onClick={addToBlacklist} disabled={!blForm.name.trim()}
-                style={{ display:'flex', alignItems:'center', gap:6, background:'#dc2626', color:'#fff', border:'none', padding:'8px 16px', borderRadius:8, fontWeight:600, cursor:'pointer', fontSize:14, opacity:!blForm.name.trim()?0.5:1 }}>
+              <button className="btn-secondary" onClick={()=>setBlModal(false)}>Cancel</button>
+              <button onClick={saveBlacklist} disabled={!blForm.name.trim()||!blForm.reason.trim()}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:(!blForm.name.trim()||!blForm.reason.trim())?'#f3f4f6':'#dc2626', color:(!blForm.name.trim()||!blForm.reason.trim())?'#9ca3af':'#fff' }}>
                 <Ban size={14}/> Add to Blacklist
               </button>
             </div>
