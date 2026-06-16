@@ -5,6 +5,8 @@ import { todaySA } from '../lib/timezone';
 import Avatar from './Avatar';
 
 const STATUSES = ['Applied','Phone Screen','Interview','Offer','Hired','Rejected'];
+const PIPELINE_STATUSES = ['Applied','Phone Screen','Interview','Offer','Hired','Rejected']; // shown in main pipeline
+
 const ROLES    = ['Crew Leader','Crew Worker','Doorhanger Distributor','CSR'];
 const SOURCES  = ['Indeed','Referral','Craigslist','Web Form','Walk-in','Other'];
 
@@ -12,6 +14,8 @@ const STATUS_COLORS = {
   Applied:'#6b7280','Phone Screen':'#f59e0b',Interview:'#3b82f6',
   Offer:'#8b5cf6',Hired:'#16a34a',Rejected:'#dc2626'
 };
+const BLACKLIST_COLOR = { bg:'#fef2f2', border:'#fecaca', text:'#dc2626', dot:'#dc2626' };
+
 const SOURCE_COLORS = {
   Indeed:'#2563eb',Referral:'#16a34a',Craigslist:'#7c3aed',
   'Web Form':'#0891b2','Walk-in':'#b45309',Other:'#6b7280'
@@ -37,6 +41,7 @@ export default function Hiring() {
   const [modal, setModal]       = useState(null);
   const [form, setForm]         = useState(emptyApp);
   const [filterStatus, setFilterStatus] = useState('All');
+  const [showBlacklist, setShowBlacklist] = useState(false);
   const [filterRole, setFilterRole]     = useState('All');
 
   const openEdit = (a) => { setForm({ ...a, applied:a.applied_date }); setModal(a); };
@@ -48,14 +53,16 @@ export default function Hiring() {
   };
 
   const allApps = data.applicants || [];
+  const blacklisted = allApps.filter(a => a.status === 'Blacklisted');
+  const pipeline = allApps.filter(a => a.status !== 'Blacklisted');
 
   // Counts for status chips
   const statusCounts = {};
-  STATUSES.forEach(s => { statusCounts[s] = allApps.filter(a=>a.status===s).length; });
+  PIPELINE_STATUSES.forEach(s => { statusCounts[s] = pipeline.filter(a=>a.status===s).length; });
   const roleCounts = {};
-  ROLES.forEach(r => { roleCounts[r] = allApps.filter(a=>a.role===r).length; });
+  ROLES.forEach(r => { roleCounts[r] = pipeline.filter(a=>a.role===r).length; });
 
-  const filtered = allApps
+  const filtered = pipeline
     .filter(a => filterStatus==='All' || a.status===filterStatus)
     .filter(a => filterRole==='All'   || a.role===filterRole);
 
@@ -65,10 +72,10 @@ export default function Hiring() {
       <div style={{ marginBottom:10 }}>
         <div style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:6 }}>Filter by Status</div>
         <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
-          {['All',...STATUSES].map(s => {
+          {['All',...PIPELINE_STATUSES].map(s => {
             const active = filterStatus===s;
             const color  = STATUS_COLORS[s]||'#374151';
-            const count  = s==='All'?allApps.length:statusCounts[s]||0;
+            const count  = s==='All'?pipeline.length:statusCounts[s]||0;
             if (s!=='All' && count===0) return null;
             return (
               <button key={s} onClick={()=>setFilterStatus(s)}
@@ -99,6 +106,14 @@ export default function Hiring() {
               <Plus size={14}/> Add Applicant
             </button>
           )}
+
+      {/* Blacklist toggle */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+        <button onClick={()=>setShowBlacklist(s=>!s)}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'6px 14px', borderRadius:20, border:'1px solid #fecaca', background:showBlacklist?'#dc2626':'#fff', color:showBlacklist?'#fff':'#dc2626', fontSize:12, fontWeight:700, cursor:'pointer' }}>
+          {showBlacklist ? 'Hide' : 'Show'} Blacklist {blacklisted.length>0&&`(${blacklisted.length})`}
+        </button>
+      </div>
         </div>
       </div>
 
@@ -149,6 +164,41 @@ export default function Hiring() {
         {filtered.length===0 && <div className="empty-state">No applicants match this filter.</div>}
       </div>
 
+      {/* Blacklist Section */}
+      {showBlacklist && (
+        <div style={{ marginTop:16, marginBottom:16 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:'#dc2626', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8, display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ width:8, height:8, borderRadius:'50%', background:'#dc2626', display:'inline-block' }} />
+            Blacklisted ({blacklisted.length})
+          </div>
+          {blacklisted.length===0 && <div className="empty-state" style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10 }}>No one on the blacklist.</div>}
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {blacklisted.map(app => (
+              <div key={app.id} style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, padding:'12px 14px' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:3 }}>
+                      <Avatar name={app.name} size={32} />
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:14, color:'#991b1b' }}>{app.name}</div>
+                        <div style={{ fontSize:12, color:'#dc2626' }}>{app.role} · Applied {app.applied_date}</div>
+                      </div>
+                    </div>
+                    {app.notes && <div style={{ fontSize:13, color:'#7f1d1d', marginTop:4, marginLeft:40 }}>{app.notes}</div>}
+                  </div>
+                  {isAdmin && (
+                    <div style={{ display:'flex', gap:6 }}>
+                      <button className="btn-icon" onClick={()=>openEdit(app)}><Edit2 size={13}/></button>
+                      <button className="btn-icon danger" onClick={()=>deleteApplicant(app.id)}><Trash2 size={13}/></button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Modal */}
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
@@ -171,7 +221,7 @@ export default function Hiring() {
               </label>
               <label>Status
                 <select style={inp} value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
-                  {STATUSES.map(s=><option key={s}>{s}</option>)}
+                  {[...STATUSES,'Blacklisted'].map(s=><option key={s}>{s}</option>)}
                 </select>
               </label>
               <label>Phone<input style={inp} value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} placeholder="(555) 000-0000" /></label>

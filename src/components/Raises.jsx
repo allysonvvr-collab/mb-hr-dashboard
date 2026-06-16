@@ -23,7 +23,7 @@ export default function Raises() {
         <div>
           <strong>Annual Raise Window — End of June</strong>
           <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:5 }}>
-            {(data.employees||[]).map(e=>(
+            {(data.employees||[]).filter(e=>e.role!=='Owner').map(e=>(
               <span key={e.id} style={{ background:'#dcfce7', padding:'2px 8px', borderRadius:20, fontSize:11, color:'#166534', border:'1px solid #86efac', whiteSpace:'nowrap' }}>
                 {e.name.split(' ')[0]} · ${Number(e.wage||0).toFixed(2)}/hr
               </span>
@@ -76,7 +76,7 @@ export default function Raises() {
                   setForm(f => ({ ...f, employeeId:e.target.value, previous:currentWage, increase:'' }));
                 }}>
                   <option value="">Select...</option>
-                  {(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name} (${Number(e.wage||0).toFixed(2)}/hr)</option>)}
+                  {(data.employees||[]).filter(e=>e.role!=='Owner').map(e=><option key={e.id} value={e.id}>{e.name} (${Number(e.wage||0).toFixed(2)}/hr)</option>)}
                 </select>
               </label>
               <label>Date<input style={inp} type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></label>
