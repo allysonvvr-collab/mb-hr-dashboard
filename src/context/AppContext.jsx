@@ -157,10 +157,12 @@ export function AppProvider({ children }) {
     updatePerformance: async (p)  => { await supabase.from('performance').update({ month:p.month, jobs_completed:p.jobsCompleted, complaints:p.complaints, rating:p.rating }).eq('id', p.id); fetchAll(); },
     deletePerformance: async (id) => { await supabase.from('performance').delete().eq('id', id); fetchAll(); },
 
-    // BLACKLIST
-    addBlacklist:    async (b)  => { await supabase.from('blacklist').insert([{ name:b.name, position:b.position||null, phone:b.phone||null, reason:b.reason||null }]); fetchAll(); },
-    deleteBlacklist: async (id) => { await supabase.from('blacklist').delete().eq('id', id); fetchAll(); },
+
   };
+
+  // ── BLACKLIST ─────────────────────────────────────────────────
+  const addBlacklist    = async (b) => { await supabase.from('blacklist').insert([{ name:b.name, position:b.position||null, phone:b.phone||null, reason:b.reason||null }]); fetchAll(); };
+  const deleteBlacklist = async (id) => { await supabase.from('blacklist').delete().eq('id', id); fetchAll(); };
 
   // ── Upload employee photo ────────────────────────────────────
   const uploadEmployeePhoto = async (employeeId, file) => {
