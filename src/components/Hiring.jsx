@@ -78,9 +78,9 @@ export default function Hiring() {
           <span style={{ background:activeView==='applicants'?'rgba(255,255,255,0.25)':'#e5e7eb', color:activeView==='applicants'?'#fff':'#6b7280', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{allApps.length}</span>
         </button>
         <button onClick={()=>setActiveView('blacklist')}
-          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:activeView==='blacklist'?'#dc2626':'#f3f4f6', color:activeView==='blacklist'?'#fff':'#374151' }}>
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'1px solid', fontSize:13, fontWeight:600, cursor:'pointer', background:activeView==='blacklist'?'#374151':'#fff', color:activeView==='blacklist'?'#fff':'#374151', borderColor:activeView==='blacklist'?'#374151':'#e5e7eb' }}>
           <Ban size={14} /> Blacklist
-          {blacklist.length > 0 && <span style={{ background:activeView==='blacklist'?'rgba(255,255,255,0.25)':'#fee2e2', color:activeView==='blacklist'?'#fff':'#dc2626', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{blacklist.length}</span>}
+          {blacklist.length > 0 && <span style={{ background:activeView==='blacklist'?'rgba(255,255,255,0.2)':'#f3f4f6', color:activeView==='blacklist'?'#fff':'#6b7280', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{blacklist.length}</span>}
         </button>
         <div style={{ marginLeft:'auto' }}>
           {activeView==='applicants' && isAdmin && (
@@ -89,7 +89,7 @@ export default function Hiring() {
             </button>
           )}
           {activeView==='blacklist' && isAdmin && (
-            <button style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:'#dc2626', color:'#fff' }}
+            <button style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 14px', borderRadius:8, border:'1px solid #374151', fontSize:13, fontWeight:600, cursor:'pointer', background:'#374151', color:'#fff' }}
               onClick={()=>{ setBlForm(emptyBL); setBlModal(true); }}>
               <Plus size={14}/> Add to Blacklist
             </button>
@@ -180,40 +180,37 @@ export default function Hiring() {
       {/* ── BLACKLIST VIEW ── */}
       {activeView==='blacklist' && (
         <>
-          <div style={{ background:'#fef2f2', border:'1px solid #fecaca', borderRadius:10, padding:'12px 16px', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
-            <Ban size={16} color="#dc2626" style={{ flexShrink:0 }} />
-            <div>
-              <div style={{ fontWeight:700, fontSize:13, color:'#dc2626' }}>Blacklisted Individuals</div>
-              <div style={{ fontSize:12, color:'#6b7280', marginTop:1 }}>These people will NOT appear in the applicant pipeline. Internal use only.</div>
-            </div>
+          <div style={{ background:'#f9fafb', border:'1px solid #e5e7eb', borderRadius:10, padding:'12px 16px', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
+            <Ban size={15} color="#9ca3af" style={{ flexShrink:0 }} />
+            <div style={{ fontSize:13, color:'#6b7280' }}>Internal use only — these individuals will not appear in the applicant pipeline.</div>
           </div>
 
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             {blacklist.map(b => (
-              <div key={b.id} className="list-card" style={{ borderLeft:'3px solid #dc2626' }}>
+              <div key={b.id} className="list-card">
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:4 }}>
-                      <div style={{ width:38, height:38, borderRadius:'50%', background:'#fee2e2', color:'#dc2626', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
+                    <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:6 }}>
+                      <div style={{ width:38, height:38, borderRadius:'50%', background:'#374151', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:13, flexShrink:0 }}>
                         {b.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
                       </div>
                       <div>
                         <div style={{ fontWeight:700, fontSize:14 }}>{b.name}</div>
-                        <div style={{ display:'flex', gap:6, marginTop:2 }}>
+                        <div style={{ display:'flex', gap:6, marginTop:2, flexWrap:'wrap' }}>
                           {b.position && <span style={{ background:'#f3f4f6', color:'#374151', fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:20 }}>{b.position}</span>}
                           {b.phone && <span style={{ fontSize:12, color:'#6b7280' }}>{b.phone}</span>}
                         </div>
                       </div>
                     </div>
                     {b.reason && (
-                      <div style={{ fontSize:13, color:'#374151', background:'#fef2f2', padding:'8px 10px', borderRadius:6, marginTop:4 }}>
-                        <strong style={{ color:'#dc2626', fontSize:11, textTransform:'uppercase', letterSpacing:'0.04em' }}>Reason: </strong>{b.reason}
+                      <div style={{ fontSize:13, color:'#374151', padding:'8px 10px', background:'#f9fafb', borderRadius:6, borderLeft:'3px solid #e5e7eb' }}>
+                        <span style={{ color:'#6b7280', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em', marginRight:6 }}>Reason</span>{b.reason}
                       </div>
                     )}
                     <div style={{ fontSize:11, color:'#9ca3af', marginTop:6 }}>Added {b.created_at?.split('T')[0]}</div>
                   </div>
                   {isAdmin && (
-                    <button className="btn-icon danger" onClick={()=>deleteBlacklist(b.id)} title="Remove from blacklist">
+                    <button className="btn-icon danger" onClick={()=>deleteBlacklist(b.id)} title="Remove">
                       <Trash2 size={13}/>
                     </button>
                   )}
@@ -257,7 +254,7 @@ export default function Hiring() {
         <div className="modal-overlay" onClick={()=>setBlModal(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ color:'#dc2626', display:'flex', alignItems:'center', gap:8 }}><Ban size={18}/> Add to Blacklist</h3>
+              <h3 style={{ display:'flex', alignItems:'center', gap:8, color:'#374151' }}><Ban size={16} color="#6b7280"/> Add to Blacklist</h3>
               <button className="btn-icon" onClick={()=>setBlModal(false)}><X size={18}/></button>
             </div>
             <p style={{ fontSize:13, color:'#6b7280', marginBottom:16 }}>This person will be flagged internally and won't appear in the hiring pipeline.</p>
@@ -285,8 +282,8 @@ export default function Hiring() {
             <div className="modal-footer">
               <button className="btn-secondary" onClick={()=>setBlModal(false)}>Cancel</button>
               <button onClick={saveBlacklist} disabled={!blForm.name.trim()||!blForm.reason.trim()}
-                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:(!blForm.name.trim()||!blForm.reason.trim())?'#f3f4f6':'#dc2626', color:(!blForm.name.trim()||!blForm.reason.trim())?'#9ca3af':'#fff' }}>
-                <Ban size={14}/> Add to Blacklist
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:(!blForm.name.trim()||!blForm.reason.trim())?'#f3f4f6':'#374151', color:(!blForm.name.trim()||!blForm.reason.trim())?'#9ca3af':'#fff' }}>
+                <Check size={14}/> Save
               </button>
             </div>
           </div>
