@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
 import { Plus, Trash2, X, Check, TrendingUp } from 'lucide-react';
-import { todaySA } from '../lib/timezone';
+import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
@@ -47,7 +47,7 @@ export default function Raises() {
                     <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={32} />
                     <span style={{ fontWeight:700, fontSize:14 }}>{emp?.name||'—'}</span>
                   </div>
-                  <div style={{ fontSize:12, color:'#6b7280', marginBottom:4 }}>{r.raise_date}</div>
+                  <div style={{ fontSize:12, color:'#6b7280', marginBottom:4 }}>{formatDateSA(r.raise_date)}</div>
                   <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
                     <span style={{ fontSize:13, color:'#6b7280' }}>${Number(r.previous_rate).toFixed(2)}</span>
                     <span style={{ color:'#9ca3af' }}>→</span>

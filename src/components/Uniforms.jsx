@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
-import { todaySA } from '../lib/timezone';
+import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 
 const ITEMS=['Polo Shirt','Hat','Jacket','Pants','Safety Vest','Boots','Gloves'];
@@ -41,7 +41,7 @@ export default function Uniforms() {
                     <span style={{ background:sc(u.status)+'18', color:sc(u.status), fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{u.status}</span>
                   </div>
                   <div style={{ fontSize:13, color:'#374151' }}>{u.item} · Size {u.size} · Qty {u.qty}</div>
-                  <div style={{ fontSize:12, color:'#6b7280', marginTop:2 }}>Issued: {u.issued_date}</div>
+                  <div style={{ fontSize:12, color:'#6b7280', marginTop:2 }}>Issued: {formatDateSA(u.issued_date)}</div>
                 </div>
                 {isAdmin && (
                   <div style={{ display:'flex', gap:6, flexShrink:0 }}>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, X, Check, Star, Ban } from 'lucide-react';
-import { todaySA } from '../lib/timezone';
+import { todaySA, formatDateSA } from '../lib/timezone';
 import Avatar from './Avatar';
 
 const STATUSES = ['Applied','Phone Screen','Interview','Offer','Hired','Rejected'];
@@ -157,7 +157,7 @@ export default function Hiring() {
                         </div>
                       </div>
                       <div style={{ fontSize:12, color:'#6b7280', marginBottom:4 }}>
-                        {app.phone&&<span>{app.phone} · </span>}{app.email&&<span>{app.email} · </span>}Applied {app.applied_date}
+                        {app.phone&&<span>{app.phone} · </span>}{app.email&&<span>{app.email} · </span>}Applied {formatDateSA(app.applied_date)}
                       </div>
                       <div style={{ marginBottom:app.notes?4:0 }}><StarRating value={app.stars} /></div>
                       {app.notes && <div style={{ fontSize:13, color:'#374151', fontStyle:'italic' }}>{app.notes}</div>}
@@ -207,7 +207,7 @@ export default function Hiring() {
                         <span style={{ color:'#6b7280', fontSize:11, fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em', marginRight:6 }}>Reason</span>{b.reason}
                       </div>
                     )}
-                    <div style={{ fontSize:11, color:'#9ca3af', marginTop:6 }}>Added {b.created_at?.split('T')[0]}</div>
+                    <div style={{ fontSize:11, color:'#9ca3af', marginTop:6 }}>Added {formatDateSA(b.created_at)}</div>
                   </div>
                   {isAdmin && (
                     <button className="btn-icon danger" onClick={()=>deleteBlacklist(b.id)} title="Remove">

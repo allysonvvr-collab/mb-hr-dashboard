@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 
 const CERT_NAMES = ['OSHA 10','OSHA 30','Pesticide Applicator License','QuickBooks Certified','First Aid/CPR',"Driver's License",'CDL'];
@@ -40,8 +41,8 @@ export default function Certifications() {
                   </div>
                   <div style={{ fontSize:13, fontWeight:600, color:'#374151', marginBottom:2 }}>{c.name}</div>
                   <div style={{ fontSize:12, color:'#6b7280' }}>
-                    {c.earned_date ? `Earned: ${c.earned_date}` : 'Not yet earned'} 
-                    {c.expires_date ? ` · Expires: ${c.expires_date}` : ' · No expiry'}
+                    {c.earned_date ? `Earned: ${formatDateSA(c.earned_date)}` : 'Not yet earned'}
+                    {c.expires_date ? ` · Expires: ${formatDateSA(c.expires_date)}` : ' · No expiry'}
                   </div>
                 </div>
                 {isAdmin && (
@@ -57,7 +58,6 @@ export default function Certifications() {
         {(data.certifications||[]).length===0 && <div className="empty-state">No certifications on file.</div>}
       </div>
 
-      {/* Coverage by employee */}
       <h3 style={{ marginTop:24, marginBottom:10, fontSize:12, fontWeight:700, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.05em' }}>Coverage by Employee</h3>
       <div className="card-grid" style={{ gridTemplateColumns:'repeat(auto-fill, minmax(160px,1fr))' }}>
         {(data.employees||[]).map(emp => {
@@ -85,7 +85,7 @@ export default function Certifications() {
               <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Certification<select style={inp} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}>{CERT_NAMES.map(n=><option key={n}>{n}</option>)}</select></label>
               <label>Date Earned<input style={inp} type="date" value={form.earned} onChange={e=>setForm(f=>({...f,earned:e.target.value}))} /></label>
-              <label>Expiry (blank = none)<input style={inp} type="date" value={form.expires} onChange={e=>setForm(f=>({...f,expires:e.target.value}))} /></label>
+              <label>Expiry Date (blank = none)<input style={inp} type="date" value={form.expires} onChange={e=>setForm(f=>({...f,expires:e.target.value}))} /></label>
               <label style={{ gridColumn:'1/-1' }}>Status<select style={inp} value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{STATUSES.map(s=><option key={s}>{s}</option>)}</select></label>
             </div>
             <div className="modal-footer">

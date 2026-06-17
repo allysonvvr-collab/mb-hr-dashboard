@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { todaySA } from '../lib/timezone';
+import { todaySA, formatDateSA } from '../lib/timezone';
 import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
 import { TabHeader } from './TabHeader';
+
 const CATS=['punctuality','quality','attitude','teamwork'];
 const empty={ employeeId:'', date:todaySA(), rating:4, punctuality:4, quality:4, attitude:4, teamwork:4, notes:'' };
+
 function RatingBar({ label, value, onChange }) {
   return (
     <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
@@ -18,17 +20,20 @@ function RatingBar({ label, value, onChange }) {
     </div>
   );
 }
+
 export default function Reviews() {
   const { data, getEmployee, addReview, updateReview, deleteReview, isAdmin } = useApp();
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(empty);
+
   const openEdit = (r) => { setForm({ ...r, employeeId:r.employee_id, date:r.review_date }); setModal(r); };
   const closeModal = () => setModal(null);
   const save = () => { const r={...form, employeeId:parseInt(form.employeeId)}; if(modal==='add') addReview(r); else updateReview(r); closeModal(); };
   const oc = (r) => r>=4?'#16a34a':r>=3?'#f59e0b':'#dc2626';
+
   return (
     <div>
-      <TabHeader title="Employee Reviews" settings={<p style={{color:'#6b7280',fontSize:13}}>Conduct periodic reviews rating punctuality, work quality, attitude, and teamwork. Reviews are tied to raise decisions and performance records.</p>}>
+      <TabHeader title="Employee Reviews" settings={<p style={{color:'#6b7280',fontSize:13}}>Periodic reviews rating punctuality, quality, attitude, and teamwork — tied to raise decisions and performance records.</p>}>
         {isAdmin && <button className="btn-primary" onClick={() => { setForm(empty); setModal('add'); }}><Plus size={16} /> Add Review</button>}
       </TabHeader>
       <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
@@ -42,7 +47,7 @@ export default function Reviews() {
                     <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={36} />
                     <strong>{emp?.name||'—'}</strong>
                     <span style={{ color:'#6b7280', fontSize:13 }}>{emp?.role}</span>
-                    <span style={{ color:'#6b7280', fontSize:13 }}>{rev.review_date}</span>
+                    <span style={{ color:'#6b7280', fontSize:13 }}>{formatDateSA(rev.review_date)}</span>
                     <span style={{ background:oc(rev.rating)+'20', color:oc(rev.rating), padding:'2px 10px', borderRadius:20, fontWeight:700, fontSize:13 }}>{rev.rating}/5 Overall</span>
                   </div>
                   <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:8 }}>

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { Plus, Edit2, Trash2, X, Check, ChevronDown, ChevronUp, AlertTriangle, DollarSign, User } from 'lucide-react';
-import { todaySA } from '../lib/timezone';
+import { Plus, Edit2, Trash2, X, Check, AlertTriangle, DollarSign, User } from 'lucide-react';
+import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
@@ -65,8 +65,8 @@ export default function Incidents() {
   const { data, getEmployee, addIncident, updateIncident, deleteIncident, isAdmin } = useApp();
   const [modal, setModal]       = useState(null);
   const [form, setForm]         = useState(empty);
-  const [view, setView]         = useState('summary'); // 'summary' | 'all'
-  const [selectedEmp, setSelectedEmp] = useState(null); // employee id to drill into
+  const [view, setView]         = useState('summary');
+  const [selectedEmp, setSelectedEmp] = useState(null);
 
   const openAdd  = () => { setForm(empty); setModal('add'); };
   const openEdit = (i) => { setForm({ ...i, employeeId:i.employee_id, date:i.incident_date, docSigned:i.doc_signed }); setModal(i); };
@@ -81,13 +81,11 @@ export default function Incidents() {
   const total = allIncidents.reduce((s,i) => s + Number(i.cost||0), 0);
   const open  = allIncidents.filter(i => i.status==='Open').length;
 
-  // Group incidents by employee
   const byEmployee = (data.employees||[])
     .map(emp => ({ emp, incidents: allIncidents.filter(i => i.employee_id === emp.id) }))
     .filter(x => x.incidents.length > 0)
     .sort((a,b) => b.incidents.reduce((s,i)=>s+Number(i.cost||0),0) - a.incidents.reduce((s,i)=>s+Number(i.cost||0),0));
 
-  // Displayed incidents (all or filtered by employee)
   const displayedIncidents = selectedEmp
     ? allIncidents.filter(i => i.employee_id === selectedEmp)
     : allIncidents;
@@ -96,7 +94,6 @@ export default function Incidents() {
 
   return (
     <div>
-      {/* Stats */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
         <div className="stat-card">
           <div className="stat-num">{allIncidents.length}</div>
@@ -115,10 +112,9 @@ export default function Incidents() {
       <TabHeader title="Incident Log" settings={
         <div style={{ fontSize:13, color:'#6b7280' }}>
           <p>Log all vehicle damage, property damage, or workplace incidents.</p>
-          <p style={{ marginTop:8 }}>Use <strong>Summary View</strong> to see totals per employee at a glance. Use <strong>All Incidents</strong> to see the full log.</p>
+          <p style={{ marginTop:8 }}>Use <strong>Summary View</strong> to see totals per employee. Use <strong>All Incidents</strong> for the full log.</p>
         </div>
       }>
-        {/* View toggle */}
         <div style={{ display:'flex', background:'#f3f4f6', borderRadius:8, padding:2, gap:2 }}>
           <button onClick={()=>{ setView('summary'); setSelectedEmp(null); }}
             style={{ padding:'6px 12px', borderRadius:6, border:'none', fontSize:12, fontWeight:600, cursor:'pointer', background:view==='summary'?'#fff':'none', color:view==='summary'?'#1B3A2D':'#6b7280', boxShadow:view==='summary'?'0 1px 3px rgba(0,0,0,0.1)':'none' }}>
@@ -132,7 +128,6 @@ export default function Incidents() {
         {isAdmin && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Log Incident</button>}
       </TabHeader>
 
-      {/* Summary View */}
       {view === 'summary' && !selectedEmp && (
         <div>
           {byEmployee.length === 0 && <div className="empty-state">No incidents on record yet.</div>}
@@ -142,8 +137,6 @@ export default function Incidents() {
                 onViewAll={() => { setSelectedEmp(emp.id); setView('all'); }} />
             ))}
           </div>
-
-          {/* Employees with zero incidents */}
           {(data.employees||[]).filter(e => !allIncidents.find(i=>i.employee_id===e.id)).length > 0 && (
             <div style={{ marginTop:20 }}>
               <div style={{ fontSize:12, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>No Incidents</div>
@@ -162,10 +155,8 @@ export default function Incidents() {
         </div>
       )}
 
-      {/* All Incidents / Filtered View */}
       {view === 'all' && (
         <div>
-          {/* Breadcrumb if filtered */}
           {selectedEmp && (
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, padding:'8px 12px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb' }}>
               <button onClick={()=>{ setSelectedEmp(null); setView('summary'); }}
@@ -191,7 +182,7 @@ export default function Incidents() {
                       <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:4 }}>
                         <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={32} />
                         <strong style={{ fontSize:14 }}>{emp?.name||'—'}</strong>
-                        <span style={{ fontSize:12, color:'#6b7280' }}>{inc.incident_date}</span>
+                        <span style={{ fontSize:12, color:'#6b7280' }}>{formatDateSA(inc.incident_date)}</span>
                         <span style={{ fontWeight:800, color:'#dc2626', fontSize:14, fontFamily:'Manrope,sans-serif' }}>${Number(inc.cost).toLocaleString()}</span>
                         <span style={{ background:inc.status==='Closed'?'#dcfce7':'#fef3c7', color:inc.status==='Closed'?'#166534':'#92400e', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
                           {inc.status}
@@ -217,7 +208,6 @@ export default function Incidents() {
         </div>
       )}
 
-      {/* Modal */}
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e=>e.stopPropagation()}>

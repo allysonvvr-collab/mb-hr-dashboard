@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, X, Check, Camera, Search } from 'lucide-react';
-import { isBirthdayUpcoming, daysUntilBirthday } from '../lib/timezone';
+import { isBirthdayUpcoming, daysUntilBirthday, formatDateSA } from '../lib/timezone';
 
 const ROLES = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker', 'CSR'];
 
@@ -153,7 +153,7 @@ export default function Team() {
               <div className="emp-details" style={{ marginTop:10 }}>
                 <div><span>Phone</span><span>{emp.phone||'—'}</span></div>
                 <div><span>Email</span><span style={{ fontSize:12 }}>{emp.email||'—'}</span></div>
-                <div><span>Start</span><span>{emp.start_date||'—'}</span></div>
+                <div><span>Start</span><span>{emp.start_date ? formatDateSA(emp.start_date) : '—'}</span></div>
                 <div><span>Birthday</span><span>{emp.birthday||'—'}</span></div>
                 {emp.role !== 'Owner' && <div><span>Wage</span><span style={{ color:'#1B3A2D', fontWeight:700 }}>${Number(emp.wage||0).toFixed(2)}/hr</span></div>}
               </div>
