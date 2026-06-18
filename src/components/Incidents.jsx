@@ -232,8 +232,16 @@ export default function Incidents() {
                   <option>Open</option><option>Closed</option>
                 </select>
               </label>
-              <label style={{ display:'flex', flexDirection:'row', alignItems:'center', gap:10, gridColumn:'1/-1' }}>
-                <input type="checkbox" checked={form.docSigned} onChange={e=>setForm(f=>({...f,docSigned:e.target.checked}))} style={{ width:18, height:18 }} />
+              <label style={{ display:'flex', flexDirection:'row', alignItems:'center', gap:10, gridColumn:'1/-1', cursor:'pointer' }} onClick={()=>setForm(f=>({...f,docSigned:!f.docSigned}))}>
+                <span style={{
+                  width:20, height:20, borderRadius:5, flexShrink:0,
+                  border: form.docSigned ? '2px solid #1B3A2D' : '2px solid #d1d5db',
+                  background: form.docSigned ? '#1B3A2D' : '#fff',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  transition:'background 0.15s, border-color 0.15s'
+                }}>
+                  {form.docSigned && <Check size={14} color="#fff" strokeWidth={3} />}
+                </span>
                 <span>Documentation Signed</span>
               </label>
             </div>

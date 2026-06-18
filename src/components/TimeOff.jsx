@@ -134,8 +134,16 @@ export default function TimeOff() {
               <label>Start Date<input style={inp} type="date" value={form.startDate} onChange={e=>handleStartDate(e.target.value)} /></label>
               <label>End Date<input style={inp} type="date" value={form.endDate} min={form.startDate} onChange={e=>handleEndDate(e.target.value)} /></label>
 
-              <label style={{ gridColumn:'1/-1', display:'flex', flexDirection:'row', alignItems:'center', gap:10, padding:'8px 0' }}>
-                <input type="checkbox" checked={form.halfDay} onChange={e=>setForm(f=>({...f,halfDay:e.target.checked}))} style={{ width:18, height:18, flexShrink:0 }} />
+              <label style={{ gridColumn:'1/-1', display:'flex', flexDirection:'row', alignItems:'center', gap:10, padding:'8px 0', cursor:'pointer' }} onClick={()=>setForm(f=>({...f,halfDay:!f.halfDay}))}>
+                <span style={{
+                  width:20, height:20, borderRadius:5, flexShrink:0,
+                  border: form.halfDay ? '2px solid #1B3A2D' : '2px solid #d1d5db',
+                  background: form.halfDay ? '#1B3A2D' : '#fff',
+                  display:'flex', alignItems:'center', justifyContent:'center',
+                  transition:'background 0.15s, border-color 0.15s'
+                }}>
+                  {form.halfDay && <Check size={14} color="#fff" strokeWidth={3} />}
+                </span>
                 <span>{isSingleDay ? 'This is a half day' : 'Last day is a half day'}</span>
               </label>
 
