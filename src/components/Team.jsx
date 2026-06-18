@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, X, Check, Camera, Search } from 'lucide-react';
-import { isBirthdayUpcoming, daysUntilBirthday, formatDateSA } from '../lib/timezone';
+import { isBirthdayUpcoming, daysUntilBirthday, formatDateSA, formatBirthdaySA } from '../lib/timezone';
 
 const ROLES = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker', 'CSR'];
 
@@ -94,7 +94,7 @@ export default function Team() {
       {upcomingBdays.length > 0 && (
         <div className="alert-banner">
           <strong>Upcoming Birthdays — Next 30 Days:</strong>{' '}
-          {upcomingBdays.map(e=>`${e.name} — ${e.birthday} (${daysUntilBirthday(e.birthday)}d away)`).join(', ')}
+          {upcomingBdays.map(e=>`${e.name} — ${formatBirthdaySA(e.birthday)} (${daysUntilBirthday(e.birthday)}d away)`).join(', ')}
         </div>
       )}
 
@@ -154,7 +154,7 @@ export default function Team() {
                 <div><span>Phone</span><span>{emp.phone||'—'}</span></div>
                 <div><span>Email</span><span style={{ fontSize:12 }}>{emp.email||'—'}</span></div>
                 <div><span>Start</span><span>{emp.start_date ? formatDateSA(emp.start_date) : '—'}</span></div>
-                <div><span>Birthday</span><span>{emp.birthday||'—'}</span></div>
+                <div><span>Birthday</span><span>{emp.birthday ? formatBirthdaySA(emp.birthday) : '—'}</span></div>
                 {emp.role !== 'Owner' && <div><span>Wage</span><span style={{ color:'#1B3A2D', fontWeight:700 }}>${Number(emp.wage||0).toFixed(2)}/hr</span></div>}
               </div>
 
@@ -202,7 +202,7 @@ export default function Team() {
               <label>Phone<input style={inp} value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))} placeholder="(555) 000-0000" /></label>
               <label>Email<input style={inp} type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} placeholder="email@example.com" /></label>
               <label>Start Date<input style={inp} type="date" value={form.start_date} onChange={e=>setForm(f=>({...f,start_date:e.target.value}))} /></label>
-              <label>Birthday (e.g. Jul 21)<input style={inp} value={form.birthday} onChange={e=>setForm(f=>({...f,birthday:e.target.value}))} placeholder="Jul 21" /></label>
+              <label>Birthday<input style={inp} type="date" value={form.birthday} onChange={e=>setForm(f=>({...f,birthday:e.target.value}))} /></label>
               {form.role !== 'Owner' && <label>Wage ($/hr)<input style={inp} type="number" step="0.25" min="0" value={form.wage} onChange={e=>setForm(f=>({...f,wage:e.target.value}))} placeholder="15.00" /></label>}
               {form.role !== 'Owner' && <label>Strikes (0–3)<input style={inp} type="number" min="0" max="3" value={form.strikes} onChange={e=>setForm(f=>({...f,strikes:e.target.value}))} /></label>}
             </div>

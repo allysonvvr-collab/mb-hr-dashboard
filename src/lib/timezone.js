@@ -40,26 +40,48 @@ export function clockSA() {
   });
 }
 
-/** Birthday upcoming check (birthday stored as "Jul 4") */
+/**
+ * Extract month/day from a birthday stored as a real date (YYYY-MM-DD).
+ * Also tolerates legacy "Jul 21" style strings for old data that hasn't been migrated yet.
+ */
+function birthdayMonthDay(birthdayStr) {
+  if (!birthdayStr) return null;
+  // Real date format: YYYY-MM-DD
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(birthdayStr);
+  if (isoMatch) return { month: parseInt(isoMatch[2], 10) - 1, day: parseInt(isoMatch[3], 10) };
+  // Legacy "Jul 21" fallback
+  const legacy = new Date(`${birthdayStr} 2000`);
+  if (!isNaN(legacy)) return { month: legacy.getMonth(), day: legacy.getDate() };
+  return null;
+}
+
+/** Birthday upcoming check — birthday stored as a real date (YYYY-MM-DD) */
 export function isBirthdayUpcoming(birthdayStr) {
-  if (!birthdayStr) return false;
+  const md = birthdayMonthDay(birthdayStr);
+  if (!md) return false;
   const today = nowSA();
   const thisYear = today.getFullYear();
-  const bday = new Date(`${birthdayStr} ${thisYear}`);
-  if (isNaN(bday)) return false;
+  const bday = new Date(thisYear, md.month, md.day);
   const diff = (bday - today) / (1000 * 60 * 60 * 24);
   if (diff >= 0 && diff <= 30) return true;
-  const bdayNext = new Date(`${birthdayStr} ${thisYear + 1}`);
+  const bdayNext = new Date(thisYear + 1, md.month, md.day);
   const diffNext = (bdayNext - today) / (1000 * 60 * 60 * 24);
   return diffNext >= 0 && diffNext <= 30;
 }
 
 export function daysUntilBirthday(birthdayStr) {
-  if (!birthdayStr) return null;
+  const md = birthdayMonthDay(birthdayStr);
+  if (!md) return null;
   const today = nowSA();
   const thisYear = today.getFullYear();
-  let bday = new Date(`${birthdayStr} ${thisYear}`);
-  if (isNaN(bday)) return null;
-  if (bday < today) bday = new Date(`${birthdayStr} ${thisYear + 1}`);
+  let bday = new Date(thisYear, md.month, md.day);
+  if (bday < today) bday = new Date(thisYear + 1, md.month, md.day);
   return Math.ceil((bday - today) / (1000 * 60 * 60 * 24));
+}
+
+/** Format just the month/day of a birthday as MM/DD (no year, since birthdays repeat yearly) */
+export function formatBirthdaySA(birthdayStr) {
+  const md = birthdayMonthDay(birthdayStr);
+  if (!md) return '—';
+  return `${String(md.month + 1).padStart(2,'0')}/${String(md.day).padStart(2,'0')}`;
 }
