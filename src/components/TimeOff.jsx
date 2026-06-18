@@ -6,13 +6,12 @@ import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 
 const TYPES = ['Vacation','Sick','Personal','Other'];
-const DURATIONS = ['Full Day','Half Day'];
 const STATUS_COLORS = { Approved:'#16a34a', Pending:'#f59e0b', Denied:'#dc2626' };
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
-const empty = { employeeId:'', type:'Vacation', duration:'Full Day', startDate:todaySA(), endDate:todaySA(), days:1, status:'Pending', notes:'' };
+const empty = { employeeId:'', type:'Vacation', startDate:todaySA(), endDate:todaySA(), halfDay:false, status:'Pending', notes:'' };
 
-// Inclusive day count between two YYYY-MM-DD strings
-function calcDays(start, end) {
+// Inclusive whole-day count between two YYYY-MM-DD strings
+function calcWholeDays(start, end) {
   if (!start || !end) return 1;
   const s = new Date(start + 'T00:00:00');
   const e = new Date(end + 'T00:00:00');
@@ -20,11 +19,23 @@ function calcDays(start, end) {
   return diff > 0 ? diff : 1;
 }
 
-// Build the display string: "06/19/2026" or "07/02/2026 – 07/06/2026"
+// Final days total, accounting for the half-day knock-off
+function calcDays(start, end, halfDay) {
+  const whole = calcWholeDays(start, end);
+  return halfDay ? Math.max(whole - 0.5, 0.5) : whole;
+}
+
+// Build the display string: "06/19/2026" or "06/30/2026 – 07/06/2026"
 function formatRange(start, end) {
   if (!start) return '—';
   if (!end || end === start) return formatDateSA(start);
   return `${formatDateSA(start)} – ${formatDateSA(end)}`;
+}
+
+function daysLabel(days, isSingleDay) {
+  if (isSingleDay && days === 0.5) return 'Half Day';
+  if (days % 1 === 0.5) return `${days} days (incl. 1 half day)`;
+  return `${days} day${days > 1 ? 's' : ''}`;
 }
 
 export default function TimeOff() {
@@ -33,44 +44,27 @@ export default function TimeOff() {
   const [form, setForm]   = useState(empty);
 
   const pending = (data.timeOff||[]).filter(t => t.status==='Pending');
-
-  const handleDurationChange = (val) => {
-    setForm(f => {
-      const next = { ...f, duration: val };
-      if (val === 'Half Day') {
-        next.endDate = f.startDate;
-        next.days = 0.5;
-      } else {
-        next.days = calcDays(f.startDate, f.endDate || f.startDate);
-      }
-      return next;
-    });
-  };
+  const isSingleDay = form.startDate === form.endDate;
+  const computedDays = calcDays(form.startDate, form.endDate, form.halfDay);
 
   const handleStartDate = (val) => {
-    setForm(f => {
-      const next = { ...f, startDate: val };
-      if (f.duration === 'Half Day') {
-        next.endDate = val;
-        next.days = 0.5;
-      } else {
-        if (!f.endDate || f.endDate < val) next.endDate = val;
-        next.days = calcDays(val, next.endDate);
-      }
-      return next;
-    });
+    setForm(f => ({
+      ...f,
+      startDate: val,
+      endDate: (!f.endDate || f.endDate < val) ? val : f.endDate
+    }));
   };
 
   const handleEndDate = (val) => {
-    setForm(f => ({ ...f, endDate: val, days: calcDays(f.startDate, val) }));
+    setForm(f => ({ ...f, endDate: val }));
   };
 
   const save = () => {
     addTimeOff({
       ...form,
       employeeId: parseInt(form.employeeId),
-      dates: formatRange(form.startDate, form.duration === 'Half Day' ? form.startDate : form.endDate),
-      days: form.duration === 'Half Day' ? 0.5 : calcDays(form.startDate, form.endDate)
+      dates: formatRange(form.startDate, form.endDate),
+      days: calcDays(form.startDate, form.endDate, form.halfDay)
     });
     setModal(false);
   };
@@ -95,7 +89,7 @@ export default function TimeOff() {
         {(data.timeOff||[]).map(t => {
           const emp = getEmployee(t.employee_id);
           const sc = STATUS_COLORS[t.status]||'#6b7280';
-          const daysLabel = t.days === 0.5 ? 'Half Day' : `${t.days} day${t.days>1?'s':''}`;
+          const single = t.start_date && t.start_date === t.end_date;
           return (
             <div key={t.id} className="list-card">
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
@@ -103,12 +97,14 @@ export default function TimeOff() {
                   <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:4 }}>
                     <strong style={{ fontSize:14 }}>{emp?.name||'—'}</strong>
                     <span style={{ background:sc+'18', color:sc, border:`1px solid ${sc}40`, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{t.status}</span>
-                    {t.duration === 'Half Day' && (
-                      <span style={{ background:'#e0f2fe', color:'#0369a1', border:'1px solid #bae6fd', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>Half Day</span>
+                    {t.half_day && (
+                      <span style={{ background:'#e0f2fe', color:'#0369a1', border:'1px solid #bae6fd', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
+                        {single ? 'Half Day' : '+ Half Day'}
+                      </span>
                     )}
                   </div>
                   <div style={{ fontSize:13, color:'#374151', marginBottom:2 }}>
-                    {t.type} · {t.start_date ? formatRange(t.start_date, t.end_date) : t.dates} · {daysLabel}
+                    {t.type} · {t.start_date ? formatRange(t.start_date, t.end_date) : t.dates} · {daysLabel(t.days, single)}
                   </div>
                   {t.notes && t.notes!=='—' && <div style={{ fontSize:12, color:'#6b7280' }}>{t.notes}</div>}
                 </div>
@@ -135,14 +131,18 @@ export default function TimeOff() {
             <div className="form-grid">
               <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Type<select style={inp} value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>{TYPES.map(t=><option key={t}>{t}</option>)}</select></label>
-              <label>Duration<select style={inp} value={form.duration} onChange={e=>handleDurationChange(e.target.value)}>{DURATIONS.map(d=><option key={d}>{d}</option>)}</select></label>
               <label>Start Date<input style={inp} type="date" value={form.startDate} onChange={e=>handleStartDate(e.target.value)} /></label>
-              {form.duration === 'Full Day' && (
-                <label>End Date<input style={inp} type="date" value={form.endDate} min={form.startDate} onChange={e=>handleEndDate(e.target.value)} /></label>
-              )}
-              <label>Days<input style={inp} type="number" min="0.5" step="0.5" value={form.days} disabled style={{ ...inp, background:'#f9fafb' }} /></label>
+              <label>End Date<input style={inp} type="date" value={form.endDate} min={form.startDate} onChange={e=>handleEndDate(e.target.value)} /></label>
+
+              <label style={{ gridColumn:'1/-1', display:'flex', flexDirection:'row', alignItems:'center', gap:10, padding:'8px 0' }}>
+                <input type="checkbox" checked={form.halfDay} onChange={e=>setForm(f=>({...f,halfDay:e.target.checked}))} style={{ width:18, height:18, flexShrink:0 }} />
+                <span>{isSingleDay ? 'This is a half day' : 'Last day is a half day'}</span>
+              </label>
+
               <label>Status<select style={inp} value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>{['Pending','Approved','Denied'].map(s=><option key={s}>{s}</option>)}</select></label>
-              <label>Notes<input style={inp} value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Optional" /></label>
+              <label>Total Days<input style={{ ...inp, background:'#f9fafb' }} value={computedDays} disabled /></label>
+
+              <label style={{ gridColumn:'1/-1' }}>Notes<input style={inp} value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="Optional" /></label>
             </div>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={()=>setModal(false)}>Cancel</button>
