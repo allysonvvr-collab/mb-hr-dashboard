@@ -8,6 +8,7 @@ import Reviews from './components/Reviews';
 import TimeOff from './components/TimeOff';
 import Raises from './components/Raises';
 import Uniforms from './components/Uniforms';
+import Schedule from './components/Schedule';
 import Incidents from './components/Incidents';
 import Certifications from './components/Certifications';
 import Celebrations from './components/Celebrations';
@@ -17,11 +18,12 @@ import {
   Download, Users, UserPlus, BarChart2, Star,
   Calendar, TrendingUp, Shirt, AlertTriangle,
   Award, LogOut, Crown, Shield, User, Settings,
-  Gift, Menu, X as XIcon
+  Gift, Menu, X as XIcon, CalendarDays
 } from 'lucide-react';
 
 const TABS = [
   { id: 'team',           label: 'Team',             shortLabel: 'Team',    icon: Users         },
+  { id: 'schedule',       label: 'Weekly Schedule',  shortLabel: 'Schedule',icon: CalendarDays  },
   { id: 'hiring',         label: 'Hiring',           shortLabel: 'Hiring',  icon: UserPlus      },
   { id: 'performance',    label: 'Performance',      shortLabel: 'Perf',    icon: BarChart2     },
   { id: 'reviews',        label: 'Reviews',          shortLabel: 'Reviews', icon: Star          },
@@ -34,7 +36,7 @@ const TABS = [
 ];
 
 const COMPONENTS = {
-  team: Team, hiring: Hiring, performance: Performance,
+  team: Team, schedule: Schedule, hiring: Hiring, performance: Performance,
   reviews: Reviews, timeoff: TimeOff, raises: Raises,
   uniforms: Uniforms, incidents: Incidents,
   certifications: Certifications, celebrations: Celebrations,
@@ -44,7 +46,7 @@ const ROLE_ICONS  = { super_admin: Crown, admin: Shield, user: User };
 const ROLE_COLORS = { super_admin: '#7c3aed', admin: '#5db88a', user: '#9ca3af' };
 
 // Bottom bar shows first 4 tabs + More
-const BOTTOM_TABS = ['team', 'hiring', 'timeoff', 'incidents'];
+const BOTTOM_TABS = ['team', 'schedule', 'timeoff', 'incidents'];
 
 function LoadingScreen() {
   return (
