@@ -5,7 +5,7 @@ import { todaySA, formatDateSA } from '../lib/timezone';
 import Avatar from './Avatar';
 
 const STATUSES = ['Applied','Phone Screen','Interview','Offer','Hired','Rejected'];
-const ROLES    = ['Crew Leader','Crew Worker','Doorhanger Distributor','CSR'];
+const ROLES    = ['Crew Leader','Crew Worker','Doorhanger Distributor','CSR','VA'];
 const SOURCES  = ['Indeed','Referral','Craigslist','Web Form','Walk-in','Other'];
 
 const STATUS_COLORS = {

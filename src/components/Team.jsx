@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, X, Check, Camera, Search } from 'lucide-react';
 import { isBirthdayUpcoming, daysUntilBirthday, formatDateSA, formatBirthdaySA } from '../lib/timezone';
 
-const ROLES = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker', 'CSR'];
+const ROLES = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker', 'CSR', 'VA'];
 
 const ROLE_STYLE = {
   'Owner':              { dot: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', text: '#5b21b6' },
@@ -13,6 +13,7 @@ const ROLE_STYLE = {
   'Crew Worker':        { dot: '#374151', bg: '#f9fafb', border: '#e5e7eb', text: '#374151' },
   'Crew Member':        { dot: '#374151', bg: '#f9fafb', border: '#e5e7eb', text: '#374151' },
   'CSR':                { dot: '#0891b2', bg: '#f0f9ff', border: '#bae6fd', text: '#0369a1' },
+  'VA':                 { dot: '#db2777', bg: '#fdf2f8', border: '#fbcfe8', text: '#9d174d' },
 };
 
 const AVATAR_BG = ['#1B3A2D','#224d3a','#2d6349','#0d2d1a','#3a7a5c','#4d9973','#163025'];
