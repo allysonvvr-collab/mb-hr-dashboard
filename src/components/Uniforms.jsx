@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { Plus, Edit2, Trash2, X, Check, Package, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, AlertTriangle } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 
@@ -28,12 +28,20 @@ export default function Uniforms() {
   const sc = (s) => STATUS_COLORS[s]||'#6b7280';
 
   const stock = data.uniformStock || [];
-  const openStockEdit = (s) => { setStockForm({ ...s }); setStockModal(s); };
-  const closeStockModal = () => setStockModal(null);
-  const saveStock = () => {
-    const s = { ...stockForm, qty: parseInt(stockForm.qty) || 0 };
-    if (stockModal === 'add') addStockItem(s); else updateStockItem(s);
-    closeStockModal();
+  const [stockError, setStockError] = useState('');
+  const [stockSaving, setStockSaving] = useState(false);
+  const openStockEdit = (s) => { setStockForm({ ...s }); setStockError(''); setStockModal(s); };
+  const closeStockModal = () => { setStockModal(null); setStockError(''); };
+  const saveStock = async () => {
+    setStockSaving(true); setStockError('');
+    try {
+      const s = { ...stockForm, qty: parseInt(stockForm.qty) || 0 };
+      if (stockModal === 'add') await addStockItem(s); else await updateStockItem(s);
+      closeStockModal();
+    } catch (e) {
+      setStockError(e.message || 'Save failed. Check that the uniform_stock table exists in Supabase.');
+    }
+    setStockSaving(false);
   };
   const lowStockCount = stock.filter(s => s.qty <= LOW_STOCK_THRESHOLD).length;
 
@@ -59,9 +67,6 @@ export default function Uniforms() {
 
       {view === 'stock' && (
         <div>
-          <p style={{ fontSize:12, color:'#6b7280', marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
-            <Package size={13}/> This is warehouse stock not yet assigned to anyone. Update counts here when new shipments come in or after a physical count.
-          </p>
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             {ITEMS.map(item => {
               const rows = stock.filter(s => s.item === item).sort((a,b)=>SIZES.indexOf(a.size)-SIZES.indexOf(b.size));
@@ -159,6 +164,7 @@ export default function Uniforms() {
         <div className="modal-overlay" onClick={closeStockModal}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header"><h3>{stockModal==='add'?'Add Stock':'Edit Stock Count'}</h3><button className="btn-icon" onClick={closeStockModal}><X size={18}/></button></div>
+            {stockError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{stockError}</div>}
             <div className="form-grid">
               <label>Item<select style={inp} value={stockForm.item} onChange={e=>setStockForm(f=>({...f,item:e.target.value}))}>{ITEMS.map(i=><option key={i}>{i}</option>)}</select></label>
               <label>Size<select style={inp} value={stockForm.size} onChange={e=>setStockForm(f=>({...f,size:e.target.value}))}>{SIZES.map(s=><option key={s}>{s}</option>)}</select></label>
@@ -166,7 +172,7 @@ export default function Uniforms() {
             </div>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={closeStockModal}>Cancel</button>
-              <button className="btn-primary" onClick={saveStock}><Check size={15}/> Save</button>
+              <button className="btn-primary" onClick={saveStock} disabled={stockSaving}><Check size={15}/> {stockSaving ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>

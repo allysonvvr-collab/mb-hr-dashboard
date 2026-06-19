@@ -150,9 +150,9 @@ export function AppProvider({ children }) {
     deleteUniform: async (id) => { await supabase.from('uniforms').delete().eq('id', id); fetchAll(); },
 
     // UNIFORM STOCK (warehouse, unassigned)
-    addStockItem:    async (s)  => { await supabase.from('uniform_stock').upsert([{ item:s.item, size:s.size, qty:s.qty }], { onConflict: 'item,size' }); fetchAll(); },
-    updateStockItem: async (s)  => { await supabase.from('uniform_stock').update({ qty:s.qty }).eq('id', s.id); fetchAll(); },
-    deleteStockItem: async (id) => { await supabase.from('uniform_stock').delete().eq('id', id); fetchAll(); },
+    addStockItem:    async (s)  => { const { error } = await supabase.from('uniform_stock').upsert([{ item:s.item, size:s.size, qty:s.qty }], { onConflict: 'item,size' }); if (error) throw error; fetchAll(); },
+    updateStockItem: async (s)  => { const { error } = await supabase.from('uniform_stock').update({ qty:s.qty }).eq('id', s.id); if (error) throw error; fetchAll(); },
+    deleteStockItem: async (id) => { const { error } = await supabase.from('uniform_stock').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // REVIEWS
     addReview:    async (r)  => { await supabase.from('reviews').insert([{ employee_id:parseInt(r.employeeId), review_date:r.date, rating:r.rating, punctuality:r.punctuality, quality:r.quality, attitude:r.attitude, teamwork:r.teamwork, notes:r.notes, reviewed_by:user.id }]); fetchAll(); },
