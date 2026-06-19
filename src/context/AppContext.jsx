@@ -9,7 +9,7 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [data, setData]       = useState({
     employees: [], applicants: [], timeOff: [], raises: [],
-    incidents: [], certifications: [], uniforms: [], reviews: [], performance: [], blacklist: []
+    incidents: [], certifications: [], uniforms: [], uniformStock: [], reviews: [], performance: [], blacklist: []
   });
 
   // ── Auth listener ────────────────────────────────────────────
@@ -65,7 +65,7 @@ export function AppProvider({ children }) {
     fetchAll();
 
     // Real-time subscriptions
-    const tables = ['employees','applicants','time_off','raises','incidents','certifications','uniforms','reviews','performance','blacklist'];
+    const tables = ['employees','applicants','time_off','raises','incidents','certifications','uniforms','uniform_stock','reviews','performance','blacklist'];
     const channels = tables.map(t =>
       supabase.channel(`rt-${t}`)
         .on('postgres_changes', { event: '*', schema: 'public', table: t }, () => fetchAll())
@@ -75,7 +75,7 @@ export function AppProvider({ children }) {
   }, [user]);
 
   const fetchAll = async () => {
-    const [emp, app, to, ra, inc, cert, uni, rev, perf, bl] = await Promise.all([
+    const [emp, app, to, ra, inc, cert, uni, uniStock, rev, perf, bl] = await Promise.all([
       supabase.from('employees').select('*').order('name'),
       supabase.from('applicants').select('*').order('applied_date', { ascending: false }),
       supabase.from('time_off').select('*').order('created_at', { ascending: false }),
@@ -83,6 +83,7 @@ export function AppProvider({ children }) {
       supabase.from('incidents').select('*').order('incident_date', { ascending: false }),
       supabase.from('certifications').select('*').order('created_at', { ascending: false }),
       supabase.from('uniforms').select('*').order('created_at', { ascending: false }),
+      supabase.from('uniform_stock').select('*').order('item').order('size'),
       supabase.from('reviews').select('*').order('review_date', { ascending: false }),
       supabase.from('performance').select('*').order('month', { ascending: false }),
       supabase.from('blacklist').select('*').order('created_at', { ascending: false }),
@@ -95,6 +96,7 @@ export function AppProvider({ children }) {
       incidents:      inc.data  || [],
       certifications: cert.data || [],
       uniforms:       uni.data  || [],
+      uniformStock:   uniStock.data || [],
       reviews:        rev.data  || [],
       performance:    perf.data || [],
       blacklist:      bl.data   || [],
@@ -119,8 +121,8 @@ export function AppProvider({ children }) {
     deleteApplicant: async (id) => { await supabase.from('applicants').delete().eq('id', id); fetchAll(); },
 
     // TIME OFF
-    addTimeOff:    async (t)  => { await supabase.from('time_off').insert([{ employee_id:parseInt(t.employeeId), type:t.type, dates:t.dates, days:t.days, status:t.status, notes:t.notes }]); fetchAll(); },
-    updateTimeOff: async (t)  => { await supabase.from('time_off').update({ status:t.status, notes:t.notes, type:t.type, dates:t.dates, days:t.days }).eq('id', t.id); fetchAll(); },
+    addTimeOff:    async (t)  => { await supabase.from('time_off').insert([{ employee_id:parseInt(t.employeeId), type:t.type, start_date:t.startDate, end_date:t.endDate, half_day:t.halfDay, dates:t.dates, days:t.days, status:t.status, notes:t.notes }]); fetchAll(); },
+    updateTimeOff: async (t)  => { await supabase.from('time_off').update({ status:t.status, notes:t.notes, type:t.type, start_date:t.startDate, end_date:t.endDate, half_day:t.halfDay, dates:t.dates, days:t.days }).eq('id', t.id); fetchAll(); },
     deleteTimeOff: async (id) => { await supabase.from('time_off').delete().eq('id', id); fetchAll(); },
 
     // RAISES
@@ -146,6 +148,11 @@ export function AppProvider({ children }) {
     addUniform:    async (u)  => { await supabase.from('uniforms').insert([{ employee_id:parseInt(u.employeeId), item:u.item, size:u.size, qty:u.qty, issued_date:u.issued, status:u.status }]); fetchAll(); },
     updateUniform: async (u)  => { await supabase.from('uniforms').update({ item:u.item, size:u.size, qty:u.qty, issued_date:u.issued, status:u.status }).eq('id', u.id); fetchAll(); },
     deleteUniform: async (id) => { await supabase.from('uniforms').delete().eq('id', id); fetchAll(); },
+
+    // UNIFORM STOCK (warehouse, unassigned)
+    addStockItem:    async (s)  => { await supabase.from('uniform_stock').upsert([{ item:s.item, size:s.size, qty:s.qty }], { onConflict: 'item,size' }); fetchAll(); },
+    updateStockItem: async (s)  => { await supabase.from('uniform_stock').update({ qty:s.qty }).eq('id', s.id); fetchAll(); },
+    deleteStockItem: async (id) => { await supabase.from('uniform_stock').delete().eq('id', id); fetchAll(); },
 
     // REVIEWS
     addReview:    async (r)  => { await supabase.from('reviews').insert([{ employee_id:parseInt(r.employeeId), review_date:r.date, rating:r.rating, punctuality:r.punctuality, quality:r.quality, attitude:r.attitude, teamwork:r.teamwork, notes:r.notes, reviewed_by:user.id }]); fetchAll(); },
