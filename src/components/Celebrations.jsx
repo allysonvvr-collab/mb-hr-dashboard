@@ -1,36 +1,9 @@
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { nowSA } from '../lib/timezone';
-
-function daysUntil(monthDay, yearOverride) {
-  const today = nowSA();
-  const year = yearOverride || today.getFullYear();
-  const d = new Date(`${monthDay} ${year}`);
-  if (isNaN(d)) return null;
-  let diff = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
-  if (diff < 0) {
-    const next = new Date(`${monthDay} ${today.getFullYear() + 1}`);
-    diff = Math.ceil((next - today) / (1000 * 60 * 60 * 24));
-  }
-  return diff;
-}
-
-function anniversaryInfo(startDate) {
-  if (!startDate) return null;
-  const today = nowSA();
-  const start = new Date(startDate);
-  if (isNaN(start)) return null;
-  const years = today.getFullYear() - start.getFullYear();
-  const monthDay = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  const days = daysUntil(monthDay);
-  return { years: days <= 30 ? years : years + 1, monthDay, days };
-}
-
-function birthdayInfo(birthday) {
-  if (!birthday) return null;
-  const days = daysUntil(birthday);
-  return { monthDay: birthday, days };
-}
+import {
+  daysUntilBirthday, formatBirthdayShort,
+  daysUntilAnniversary, formatAnniversaryShort, anniversaryYears
+} from '../lib/timezone';
 
 function urgencyColor(days) {
   if (days === 0)  return { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' };
@@ -44,8 +17,6 @@ function urgencyColor(days) {
 function urgencyLabel(days) {
   if (days === 0)  return 'Today!';
   if (days === 1)  return 'Tomorrow';
-  if (days <= 7)   return `${days}d away`;
-  if (days <= 14)  return `${days}d away`;
   if (days <= 30)  return `${days}d away`;
   if (days <= 60)  return `~${Math.ceil(days/7)}wk away`;
   if (days <= 365) return `${Math.ceil(days/30)}mo away`;
@@ -54,21 +25,17 @@ function urgencyLabel(days) {
 
 function EventRow({ name, role, type, monthDay, days, extra, photoUrl }) {
   const colors = urgencyColor(days);
-  const initials = name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   return (
     <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderBottom:'1px solid #f3f4f6' }}>
-      {/* Avatar */}
       <Avatar name={name} photoUrl={photoUrl} size={38} />
-      {/* Name + role */}
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ fontWeight:600, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{name}</div>
         <div style={{ color:'#6b7280', fontSize:12, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{role} · {type}{extra ? ` · ${extra}` : ''}</div>
       </div>
-      {/* Date + badge — always on right, never wraps */}
       <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3, flexShrink:0 }}>
         <div style={{ fontWeight:700, fontSize:13, color:'#1B3A2D', whiteSpace:'nowrap' }}>{monthDay}</div>
         <span style={{ background:colors.bg, border:`1px solid ${colors.border}`, color:colors.text, fontSize:10, fontWeight:600, padding:'2px 7px', borderRadius:20, whiteSpace:'nowrap' }}>
-          {days === 0 ? 'Today!' : days === 1 ? 'Tomorrow' : urgencyLabel(days)}
+          {urgencyLabel(days)}
         </span>
       </div>
     </div>
@@ -79,40 +46,32 @@ export default function Celebrations() {
   const { data } = useApp();
   const employees = data.employees || [];
 
-  // Collect upcoming birthdays (next 30 days)
-  const upcomingBirthdays = employees
-    .map(emp => {
-      const info = birthdayInfo(emp.birthday);
-      if (!info || info.days === null || info.days > 30) return null;
-      return { ...emp, days: info.days, monthDay: info.monthDay, type: 'Birthday' };
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.days - b.days);
-
-  // Collect upcoming anniversaries (next 30 days)
-  const upcomingAnniversaries = employees
-    .map(emp => {
-      const info = anniversaryInfo(emp.start_date);
-      if (!info || info.days === null || info.days > 30) return null;
-      return { ...emp, days: info.days, monthDay: info.monthDay, type: 'Work Anniversary', extra: `${info.years} yr${info.years !== 1 ? 's' : ''}` };
-    })
-    .filter(Boolean)
-    .sort((a, b) => a.days - b.days);
-
-  const allUpcoming = [...upcomingBirthdays, ...upcomingAnniversaries].sort((a, b) => a.days - b.days);
-
-  // Full calendar: all employees sorted by next occurrence
+  // Birthdays — works whether birthday is a real YYYY-MM-DD date or a legacy "Jul 21" string
   const allBirthdays = employees
     .filter(e => e.birthday)
-    .map(e => ({ ...e, info: birthdayInfo(e.birthday), type: 'Birthday' }))
-    .filter(e => e.info)
-    .sort((a, b) => a.info.days - b.info.days);
+    .map(e => {
+      const days = daysUntilBirthday(e.birthday);
+      if (days === null) return null;
+      return { ...e, days, monthDay: formatBirthdayShort(e.birthday), type: 'Birthday' };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.days - b.days);
 
+  // Anniversaries — based on real start_date
   const allAnniversaries = employees
     .filter(e => e.start_date)
-    .map(e => ({ ...e, info: anniversaryInfo(e.start_date), type: 'Anniversary' }))
-    .filter(e => e.info)
-    .sort((a, b) => a.info.days - b.info.days);
+    .map(e => {
+      const days = daysUntilAnniversary(e.start_date);
+      if (days === null) return null;
+      const years = anniversaryYears(e.start_date);
+      return { ...e, days, monthDay: formatAnniversaryShort(e.start_date), years, type: 'Work Anniversary' };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.days - b.days);
+
+  const upcomingBirthdays = allBirthdays.filter(e => e.days <= 30);
+  const upcomingAnniversaries = allAnniversaries.filter(e => e.days <= 30);
+  const allUpcoming = [...upcomingBirthdays, ...upcomingAnniversaries].sort((a, b) => a.days - b.days);
 
   return (
     <div>
@@ -138,7 +97,8 @@ export default function Celebrations() {
           </h3>
           <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
             {allUpcoming.map((e, i) => (
-              <EventRow key={`${e.id}-${e.type}-${i}`} name={e.name} role={e.role} type={e.type} monthDay={e.monthDay} days={e.days} extra={e.extra} photoUrl={e.photo_url} />
+              <EventRow key={`${e.id}-${e.type}-${i}`} name={e.name} role={e.role} type={e.type} monthDay={e.monthDay} days={e.days}
+                extra={e.type === 'Work Anniversary' ? `${e.years} yr${e.years !== 1 ? 's' : ''}` : undefined} photoUrl={e.photo_url} />
             ))}
           </div>
         </div>
@@ -153,7 +113,7 @@ export default function Celebrations() {
           <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
             {allBirthdays.length === 0 && <div className="empty-state">No birthdays on file. Add them in the Team tab.</div>}
             {allBirthdays.map((e, i) => (
-              <EventRow key={`bday-${e.id}-${i}`} name={e.name} role={e.role} type="Birthday" monthDay={e.info.monthDay} days={e.info.days} photoUrl={e.photo_url} />
+              <EventRow key={`bday-${e.id}-${i}`} name={e.name} role={e.role} type="Birthday" monthDay={e.monthDay} days={e.days} photoUrl={e.photo_url} />
             ))}
           </div>
         </div>
@@ -165,12 +125,11 @@ export default function Celebrations() {
           <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
             {allAnniversaries.length === 0 && <div className="empty-state">No anniversaries on file. Add start dates in the Team tab.</div>}
             {allAnniversaries.map((e, i) => (
-              <EventRow key={`ann-${e.id}-${i}`} name={e.name} role={e.role} type="Anniversary" monthDay={e.info.monthDay} days={e.info.days} extra={`${e.info.years} yr${e.info.years !== 1 ? 's' : ''}`} photoUrl={e.photo_url} />
+              <EventRow key={`ann-${e.id}-${i}`} name={e.name} role={e.role} type="Anniversary" monthDay={e.monthDay} days={e.days} extra={`${e.years} yr${e.years !== 1 ? 's' : ''}`} photoUrl={e.photo_url} />
             ))}
           </div>
         </div>
       </div>
-
-          </div>
+    </div>
   );
 }

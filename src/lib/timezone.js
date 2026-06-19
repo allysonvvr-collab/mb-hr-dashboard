@@ -85,3 +85,45 @@ export function formatBirthdaySA(birthdayStr) {
   if (!md) return '—';
   return `${String(md.month + 1).padStart(2,'0')}/${String(md.day).padStart(2,'0')}`;
 }
+
+/** Format month/day as "Jul 11" style — used on the Celebrations dashboard */
+export function formatBirthdayShort(birthdayStr) {
+  const md = birthdayMonthDay(birthdayStr);
+  if (!md) return '—';
+  const d = new Date(2000, md.month, md.day);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/** Format a work-anniversary start_date (real YYYY-MM-DD) as "Jul 11" style */
+export function formatAnniversaryShort(startDateStr) {
+  if (!startDateStr) return '—';
+  const d = new Date(startDateStr + 'T12:00:00Z');
+  if (isNaN(d)) return '—';
+  return d.toLocaleDateString('en-US', { timeZone: SA_TZ, month: 'short', day: 'numeric' });
+}
+
+/** Days until a work anniversary (next occurrence), based on a real start_date */
+export function daysUntilAnniversary(startDateStr) {
+  if (!startDateStr) return null;
+  const start = new Date(startDateStr + 'T12:00:00Z');
+  if (isNaN(start)) return null;
+  const today = nowSA();
+  const thisYear = today.getFullYear();
+  let next = new Date(thisYear, start.getMonth(), start.getDate());
+  if (next < today) next = new Date(thisYear + 1, start.getMonth(), start.getDate());
+  return Math.ceil((next - today) / (1000 * 60 * 60 * 24));
+}
+
+/** Years of service as of the next upcoming anniversary */
+export function anniversaryYears(startDateStr) {
+  if (!startDateStr) return null;
+  const start = new Date(startDateStr + 'T12:00:00Z');
+  if (isNaN(start)) return null;
+  const today = nowSA();
+  let years = today.getFullYear() - start.getFullYear();
+  const daysAway = daysUntilAnniversary(startDateStr);
+  // If the anniversary already passed this year (daysAway counts toward next year's date), bump by 1
+  const thisYearAnniv = new Date(today.getFullYear(), start.getMonth(), start.getDate());
+  if (thisYearAnniv < today) years += 1;
+  return years;
+}
