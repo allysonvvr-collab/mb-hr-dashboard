@@ -8,14 +8,20 @@ import EmptyState from './EmptyState';
 
 const empty = { employeeId:'', month:'', jobsCompleted:'', complaints:0, rating:4 };
 
+// Owner and Operations Manager don't get performance entries — exclude from this list,
+// matching the same exclusion used in the Observation Log.
+const EXCLUDED_ROLES = ['Owner', 'Operations Manager'];
+
 export default function Performance({ goToObservation }) {
   const { data, getEmployee, addPerformance, updatePerformance, deletePerformance, isAdmin } = useApp();
   const [modal, setModal] = useState(null); // 'add' | entry object | null
   const [form, setForm] = useState(empty);
   const [saveError, setSaveError] = useState('');
+  const [filterRole, setFilterRole] = useState('All');
 
   const entries = data.performance || [];
-  const employees = data.employees || [];
+  const employees = (data.employees || []).filter(e => !EXCLUDED_ROLES.includes(e.role));
+  const roles = [...new Set(employees.map(e => e.role))].sort();
 
   const openAdd  = () => { setForm(empty); setSaveError(''); setModal('add'); };
   const openAddFor = (employeeId) => { setForm({ ...empty, employeeId: String(employeeId) }); setSaveError(''); setModal('add'); };
@@ -30,7 +36,7 @@ export default function Performance({ goToObservation }) {
     } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
   };
 
-  // Summary stats across all logged entries
+  // Summary stats across all logged entries (unaffected by the role filter — always the full picture)
   const totalJobs = entries.reduce((s, p) => s + Number(p.jobs_completed || 0), 0);
   const totalComplaints = entries.reduce((s, p) => s + Number(p.complaints || 0), 0);
   const avgRating = entries.length ? (entries.reduce((s, p) => s + Number(p.rating || 0), 0) / entries.length) : 0;
@@ -41,8 +47,9 @@ export default function Performance({ goToObservation }) {
     : null;
   const topEmp = topPerformer ? getEmployee(topPerformer.employee_id) : null;
 
-  // Every employee gets a row — their most recent logged entry (if any) is shown, otherwise blanks
+  // Every eligible employee gets a row — their most recent logged entry (if any) is shown, otherwise blanks
   const rows = employees
+    .filter(emp => filterRole === 'All' || emp.role === filterRole)
     .map(emp => {
       const empEntries = entries.filter(p => p.employee_id === emp.id).sort((a,b)=>(b.month||'').localeCompare(a.month||''));
       return { emp, entry: empEntries[0] || null };
@@ -85,16 +92,32 @@ export default function Performance({ goToObservation }) {
         {isAdmin && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Add Entry</button>}
       </TabHeader>
 
+      {/* Role filter chips */}
+      <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:14 }}>
+        {['All', ...roles].map(r => {
+          const active = filterRole === r;
+          const count = r === 'All' ? employees.length : employees.filter(e=>e.role===r).length;
+          return (
+            <button key={r} onClick={()=>setFilterRole(r)}
+              style={{ padding:'4px 10px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer',
+                background: active ? '#1B3A2D' : '#fff', color: active ? '#fff' : '#374151', borderColor: active ? '#1B3A2D' : '#e5e7eb' }}>
+              {r} ({count})
+            </button>
+          );
+        })}
+      </div>
+
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
         {rows.map(({ emp, entry }) => {
           const hasEntry = !!entry;
           const rc = hasEntry ? ratingColor(entry.rating) : '#9ca3af';
           return (
             <div key={emp.id} className="list-card">
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12, flexWrap:'wrap' }}>
+              <div className="perf-row">
                 <div
+                  className="perf-identity"
                   onClick={() => goToObservation && goToObservation(emp.id)}
-                  style={{ display:'flex', alignItems:'center', gap:10, cursor: goToObservation ? 'pointer' : 'default', minWidth:160 }}
+                  style={{ cursor: goToObservation ? 'pointer' : 'default' }}
                   title="View observation log"
                 >
                   <Avatar name={emp.name} photoUrl={emp.photo_url} size={38} />
@@ -104,30 +127,33 @@ export default function Performance({ goToObservation }) {
                   </div>
                 </div>
 
-                <div style={{ display:'flex', gap:18, alignItems:'center', flexWrap:'wrap' }}>
-                  <div style={{ textAlign:'center', minWidth:64 }}>
-                    <div style={{ fontSize:11, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>Month</div>
-                    <div style={{ fontSize:13, fontWeight:600, color: hasEntry ? 'inherit' : '#9ca3af' }}>{hasEntry ? entry.month : '—'}</div>
+                <div className="perf-stats">
+                  <div className="perf-stat">
+                    <div className="perf-stat-label">Month</div>
+                    <div className="perf-stat-value" style={{ fontSize:13, color: hasEntry ? 'inherit' : '#9ca3af' }}>{hasEntry ? entry.month : '—'}</div>
                   </div>
-                  <div style={{ textAlign:'center', minWidth:64 }}>
-                    <div style={{ fontSize:11, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>Complaints</div>
-                    <div style={{ fontSize:15, fontWeight:700, color: hasEntry ? (entry.jobs_completed > 0 ? '#dc2626' : '#16a34a') : '#9ca3af' }}>
+                  <div className="perf-stat">
+                    <div className="perf-stat-label">Complaints</div>
+                    <div className="perf-stat-value" style={{ color: hasEntry ? (entry.jobs_completed > 0 ? '#dc2626' : '#16a34a') : '#9ca3af' }}>
                       {hasEntry ? entry.jobs_completed : '—'}
                     </div>
                   </div>
-                  <div style={{ textAlign:'center', minWidth:64 }}>
-                    <div style={{ fontSize:11, color:'#9ca3af', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>Observations</div>
-                    <div style={{ fontSize:15, fontWeight:700, color: hasEntry ? (entry.complaints > 0 ? '#374151' : '#9ca3af') : '#9ca3af' }}>
+                  <div className="perf-stat">
+                    <div className="perf-stat-label">Observations</div>
+                    <div className="perf-stat-value" style={{ color: hasEntry ? (entry.complaints > 0 ? '#374151' : '#9ca3af') : '#9ca3af' }}>
                       {hasEntry ? entry.complaints : '—'}
                     </div>
                   </div>
+                </div>
+
+                <div className="perf-bottom-row">
                   {hasEntry
-                    ? <span style={{ background:rc+'18', color:rc, border:`1px solid ${rc}40`, fontSize:13, fontWeight:700, padding:'4px 12px', borderRadius:20 }}>{entry.rating}/5</span>
-                    : <span style={{ background:'#f3f4f6', color:'#9ca3af', border:'1px solid #e5e7eb', fontSize:13, fontWeight:700, padding:'4px 12px', borderRadius:20 }}>—/5</span>
+                    ? <span className="perf-rating" style={{ background:rc+'18', color:rc, border:`1px solid ${rc}40` }}>{entry.rating}/5</span>
+                    : <span className="perf-rating" style={{ background:'#f3f4f6', color:'#9ca3af', border:'1px solid #e5e7eb' }}>—/5</span>
                   }
 
                   {isAdmin && (
-                    <div style={{ display:'flex', gap:6 }}>
+                    <div className="perf-actions">
                       {hasEntry
                         ? <>
                             <button className="btn-icon" onClick={()=>openEdit(entry)}><Edit2 size={13}/></button>
@@ -142,7 +168,7 @@ export default function Performance({ goToObservation }) {
             </div>
           );
         })}
-        {rows.length === 0 && <EmptyState icon={BarChart3} message="No employees on file yet. Add them in the Team tab." />}
+        {rows.length === 0 && <EmptyState icon={BarChart3} message="No employees match this filter." />}
       </div>
 
       {modal && (

@@ -413,6 +413,71 @@ body {
   box-shadow: var(--shadow);
 }
 
+/* Performance tab — grid-based row so columns align perfectly across every row,
+   whether or not that row has data. */
+.perf-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.perf-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+  flex-shrink: 0;
+}
+.perf-stats {
+  display: grid;
+  grid-template-columns: 70px 90px 100px;
+  align-items: center;
+  gap: 14px;
+}
+.perf-stat { text-align: center; }
+.perf-stat-label {
+  font-size: 11px;
+  color: var(--gray-400);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+.perf-stat-value { font-size: 15px; font-weight: 700; }
+.perf-rating {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  text-align: center;
+}
+.perf-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 639px) {
+  .perf-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .perf-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .perf-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
 /* ══════════════════════════════════════
    STATUS CHIPS / PIPELINE
 ══════════════════════════════════════ */
