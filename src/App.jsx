@@ -8,6 +8,7 @@ import Reviews from './components/Reviews';
 import TimeOff from './components/TimeOff';
 import Raises from './components/Raises';
 import Uniforms from './components/Uniforms';
+import Observations from './components/Observations';
 import Incidents from './components/Incidents';
 import Certifications from './components/Certifications';
 import Celebrations from './components/Celebrations';
@@ -17,7 +18,7 @@ import {
   Download, Users, UserPlus, BarChart2, Star,
   Calendar, TrendingUp, Shirt, AlertTriangle,
   Award, LogOut, Crown, Shield, User, Settings,
-  Gift, Menu, X as XIcon
+  Gift, Menu, X as XIcon, ClipboardList
 } from 'lucide-react';
 
 const TABS = [
@@ -25,17 +26,18 @@ const TABS = [
   { id: 'hiring',         label: 'Hiring',           shortLabel: 'Hiring',  icon: UserPlus      },
   { id: 'performance',    label: 'Performance',      shortLabel: 'Perf',    icon: BarChart2     },
   { id: 'reviews',        label: 'Reviews',          shortLabel: 'Reviews', icon: Star          },
+  { id: 'observations',   label: 'Observation Log',  shortLabel: 'Observ.', icon: ClipboardList },
   { id: 'timeoff',        label: 'Time Off',         shortLabel: 'Time',    icon: Calendar      },
   { id: 'raises',         label: 'Raises',           shortLabel: 'Raises',  icon: TrendingUp    },
   { id: 'uniforms',       label: 'Uniforms',         shortLabel: 'Uniforms',icon: Shirt         },
-  { id: 'incidents',      label: 'Incidents',        shortLabel: 'Incidents',icon: AlertTriangle },
+  { id: 'incidents',      label: 'Damages',          shortLabel: 'Damages', icon: AlertTriangle },
   { id: 'certifications', label: 'Certifications',   shortLabel: 'Certs',   icon: Award         },
   { id: 'celebrations',   label: 'Birthdays & Anniv',shortLabel: 'Events',  icon: Gift          },
 ];
 
 const COMPONENTS = {
   team: Team, hiring: Hiring, performance: Performance,
-  reviews: Reviews, timeoff: TimeOff, raises: Raises,
+  reviews: Reviews, observations: Observations, timeoff: TimeOff, raises: Raises,
   uniforms: Uniforms, incidents: Incidents,
   certifications: Certifications, celebrations: Celebrations,
 };

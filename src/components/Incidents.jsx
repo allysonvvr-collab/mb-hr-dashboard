@@ -33,7 +33,7 @@ function EmployeeSummaryCard({ emp, incidents, onViewAll }) {
 
       <div style={{ display:'flex', gap:8, marginTop:10, flexWrap:'wrap' }}>
         <span style={{ background:'#f3f4f6', color:'#374151', fontSize:12, fontWeight:600, padding:'3px 10px', borderRadius:20 }}>
-          {incidents.length} incident{incidents.length!==1?'s':''}
+          {incidents.length} damage{incidents.length!==1?'s':''} case{incidents.length!==1?'s':''}
         </span>
         {open > 0 && (
           <span style={{ background:'#fef3c7', color:'#92400e', fontSize:12, fontWeight:700, padding:'3px 10px', borderRadius:20 }}>
@@ -109,10 +109,10 @@ export default function Incidents() {
         </div>
       </div>
 
-      <TabHeader title="Incident Log" settings={
+      <TabHeader title="Damages" settings={
         <div style={{ fontSize:13, color:'#6b7280' }}>
-          <p>Log all vehicle damage, property damage, or workplace incidents.</p>
-          <p style={{ marginTop:8 }}>Use <strong>Summary View</strong> to see totals per employee. Use <strong>All Incidents</strong> for the full log.</p>
+          <p>Log all vehicle damage, property damage, or workplace accidents.</p>
+          <p style={{ marginTop:8 }}>Use <strong>Summary View</strong> to see totals per employee. Use <strong>All Damages</strong> for the full log.</p>
         </div>
       }>
         <div style={{ display:'flex', background:'#f3f4f6', borderRadius:8, padding:2, gap:2 }}>
@@ -122,15 +122,15 @@ export default function Incidents() {
           </button>
           <button onClick={()=>{ setView('all'); setSelectedEmp(null); }}
             style={{ padding:'6px 12px', borderRadius:6, border:'none', fontSize:12, fontWeight:600, cursor:'pointer', background:view==='all'?'#fff':'none', color:view==='all'?'#1B3A2D':'#6b7280', boxShadow:view==='all'?'0 1px 3px rgba(0,0,0,0.1)':'none' }}>
-            All Incidents
+            All Damages
           </button>
         </div>
-        {isAdmin && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Log Incident</button>}
+        {isAdmin && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Log Damage</button>}
       </TabHeader>
 
       {view === 'summary' && !selectedEmp && (
         <div>
-          {byEmployee.length === 0 && <div className="empty-state">No incidents on record yet.</div>}
+          {byEmployee.length === 0 && <div className="empty-state">No damage cases on record yet.</div>}
           <div className="card-grid">
             {byEmployee.map(({ emp, incidents }) => (
               <EmployeeSummaryCard key={emp.id} emp={emp} incidents={incidents}
@@ -139,7 +139,7 @@ export default function Incidents() {
           </div>
           {(data.employees||[]).filter(e => !allIncidents.find(i=>i.employee_id===e.id)).length > 0 && (
             <div style={{ marginTop:20 }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>No Incidents</div>
+              <div style={{ fontSize:12, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>No Damages</div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
                 {(data.employees||[])
                   .filter(e => !allIncidents.find(i=>i.employee_id===e.id))
@@ -166,7 +166,7 @@ export default function Incidents() {
               <span style={{ color:'#9ca3af' }}>›</span>
               <span style={{ fontSize:13, fontWeight:700 }}>{selectedEmpObj?.name}</span>
               <span style={{ marginLeft:'auto', fontSize:12, color:'#6b7280' }}>
-                {displayedIncidents.length} incident{displayedIncidents.length!==1?'s':''} · 
+                {displayedIncidents.length} damage{displayedIncidents.length!==1?'s':''} · 
                 ${displayedIncidents.reduce((s,i)=>s+Number(i.cost||0),0).toLocaleString()} total
               </span>
             </div>
@@ -203,7 +203,7 @@ export default function Incidents() {
                 </div>
               );
             })}
-            {displayedIncidents.length===0 && <div className="empty-state">No incidents on record.</div>}
+            {displayedIncidents.length===0 && <div className="empty-state">No damages on record.</div>}
           </div>
         </div>
       )}
@@ -212,7 +212,7 @@ export default function Incidents() {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{modal==='add'?'Log Incident':'Edit Incident'}</h3>
+              <h3>{modal==='add'?'Log Damage':'Edit Damage'}</h3>
               <button className="btn-icon" onClick={closeModal}><X size={18}/></button>
             </div>
             <div className="form-grid">
