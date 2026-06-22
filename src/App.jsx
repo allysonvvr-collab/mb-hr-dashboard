@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import Login from './components/Login';
 import Team from './components/Team';
@@ -60,7 +60,13 @@ function LoadingScreen() {
 }
 
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState('team');
+  // Read the starting tab from the URL path (e.g. /reviews -> 'reviews'), defaulting to 'team'
+  const getTabFromPath = () => {
+    const path = window.location.pathname.replace(/^\/+|\/+$/g, ''); // strip leading/trailing slashes
+    return TABS.some(t => t.id === path) ? path : 'team';
+  };
+
+  const [activeTab, setActiveTab] = useState(getTabFromPath);
   const [showUsers, setShowUsers] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { data, profile, isSuperAdmin, exportData, signOut } = useApp();
@@ -79,7 +85,29 @@ function Dashboard() {
     setActiveTab(id);
     setShowUsers(false);
     setDrawerOpen(false);
+    const newPath = `/${id}`;
+    if (window.location.pathname !== newPath) {
+      window.history.pushState({ tab: id }, '', newPath);
+    }
   };
+
+  // Support browser Back/Forward buttons
+  useEffect(() => {
+    const onPopState = () => {
+      setActiveTab(getTabFromPath());
+      setShowUsers(false);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // On first load, make sure the URL reflects the resolved tab (e.g. bare "/" becomes "/team")
+  useEffect(() => {
+    const newPath = `/${activeTab}`;
+    if (window.location.pathname !== newPath) {
+      window.history.replaceState({ tab: activeTab }, '', newPath);
+    }
+  }, []);
 
   return (
     <div className="app">
@@ -124,17 +152,22 @@ function Dashboard() {
 
       {/* ── Desktop Tab Nav ── */}
       {!showUsers && (
-        <nav className="tab-nav desktop-only" style={{ display:'flex' }}>
-          {TABS.map(t => {
-            const Icon = t.icon;
-            const b = getBadge(t.id);
-            return (
-              <button key={t.id} className={`tab-btn ${activeTab===t.id?'active':''}`} onClick={() => goTo(t.id)}>
-                <Icon size={14} /> {t.label}
-                {b > 0 && <span className="tab-badge">{b}</span>}
-              </button>
-            );
-          })}
+        <nav className="tab-nav-wrap desktop-only">
+          <div className="tab-nav" id="tab-nav-scroll">
+            {TABS.map(t => {
+              const Icon = t.icon;
+              const b = getBadge(t.id);
+              return (
+                <button key={t.id} className={`tab-btn ${activeTab===t.id?'active':''}`} onClick={() => goTo(t.id)}>
+                  <Icon size={14} /> {t.label}
+                  {b > 0 && <span className="tab-badge">{b}</span>}
+                </button>
+              );
+            })}
+          </div>
+          <button className="tab-more-btn" onClick={() => setDrawerOpen(o=>!o)} title="More tabs">
+            <Menu size={15} /> More
+          </button>
         </nav>
       )}
 

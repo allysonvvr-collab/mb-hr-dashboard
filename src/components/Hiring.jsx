@@ -42,18 +42,25 @@ export default function Hiring() {
   const [blForm, setBlForm]             = useState(emptyBL);
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterRole, setFilterRole]     = useState('All');
+  const [saveError, setSaveError] = useState('');
+  const [blSaveError, setBlSaveError] = useState('');
 
-  const openEdit = (a) => { setForm({ ...a, applied:a.applied_date }); setModal(a); };
-  const closeModal = () => setModal(null);
-  const save = () => {
-    const a = { ...form, applied_date:form.applied };
-    if (modal==='add') addApplicant(a); else updateApplicant(a);
-    closeModal();
+  const openEdit = (a) => { setForm({ ...a, applied:a.applied_date }); setSaveError(''); setModal(a); };
+  const closeModal = () => { setModal(null); setSaveError(''); };
+  const save = async () => {
+    try {
+      const a = { ...form, applied_date:form.applied };
+      if (modal==='add') await addApplicant(a); else await updateApplicant(a);
+      closeModal();
+    } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
   };
-  const saveBlacklist = () => {
-    addBlacklist(blForm);
-    setBlForm(emptyBL);
-    setBlModal(false);
+  const saveBlacklist = async () => {
+    try {
+      await addBlacklist(blForm);
+      setBlForm(emptyBL);
+      setBlModal(false);
+      setBlSaveError('');
+    } catch (e) { setBlSaveError(e.message || 'Save failed. Please try again.'); }
   };
 
   const allApps = data.applicants || [];
@@ -230,6 +237,7 @@ export default function Hiring() {
               <h3>{modal==='add'?'Add Applicant':'Edit Applicant'}</h3>
               <button className="btn-icon" onClick={closeModal}><X size={18}/></button>
             </div>
+            {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
             <div className="form-grid">
               <label>Full Name<input style={inp} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Full name" /></label>
               <label>Position<select style={inp} value={form.role} onChange={e=>setForm(f=>({...f,role:e.target.value}))}>{ROLES.map(r=><option key={r}>{r}</option>)}</select></label>
@@ -251,12 +259,13 @@ export default function Hiring() {
 
       {/* Blacklist Add Modal */}
       {blModal && (
-        <div className="modal-overlay" onClick={()=>setBlModal(false)}>
+        <div className="modal-overlay" onClick={()=>{ setBlModal(false); setBlSaveError(''); }}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header">
               <h3 style={{ display:'flex', alignItems:'center', gap:8, color:'#374151' }}><Ban size={16} color="#6b7280"/> Add to Blacklist</h3>
-              <button className="btn-icon" onClick={()=>setBlModal(false)}><X size={18}/></button>
+              <button className="btn-icon" onClick={()=>{ setBlModal(false); setBlSaveError(''); }}><X size={18}/></button>
             </div>
+            {blSaveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{blSaveError}</div>}
             <p style={{ fontSize:13, color:'#6b7280', marginBottom:16 }}>This person will be flagged internally and won't appear in the hiring pipeline.</p>
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               <label style={{ display:'flex', flexDirection:'column', gap:5, fontSize:13, fontWeight:600, color:'#374151' }}>

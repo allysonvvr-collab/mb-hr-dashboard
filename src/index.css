@@ -122,20 +122,46 @@ body {
 /* ══════════════════════════════════════
    TAB NAV
 ══════════════════════════════════════ */
-.tab-nav {
+.tab-nav-wrap {
   background: var(--green-900);
+  display: flex;
+  align-items: stretch;
+  position: sticky;
+  top: 56px;
+  z-index: 99;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
+}
+.tab-nav {
   display: flex;
   overflow-x: auto;
   padding: 0 12px;
   gap: 0;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  position: sticky;
-  top: 56px;
-  z-index: 99;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  flex: 1;
+  min-width: 0;
 }
 .tab-nav::-webkit-scrollbar { display: none; }
+
+.tab-more-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab-more-btn:hover { background: rgba(255,255,255,0.12); }
 
 .tab-btn {
   display: flex;
@@ -695,7 +721,7 @@ label textarea:focus { border-color: var(--green-500); box-shadow: 0 0 0 3px rgb
 @media (max-width: 639px) {
   .desktop-only { display: none !important; }
   .mobile-only  { display: flex !important; }
-  .tab-nav      { display: none !important; }
+  .tab-nav-wrap { display: none !important; }
   .main-content { padding-bottom: 90px; } /* space for bottom bar */
 }
 

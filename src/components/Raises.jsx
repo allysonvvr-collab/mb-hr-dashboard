@@ -12,9 +12,15 @@ export default function Raises() {
   const { data, getEmployee, addRaise, deleteRaise, isAdmin } = useApp();
   const [modal, setModal] = useState(false);
   const [form, setForm]   = useState(empty);
+  const [saveError, setSaveError] = useState('');
 
   const calcInc = (f) => { const p=parseFloat(f.previous),n=parseFloat(f.newRate); return (!isNaN(p)&&!isNaN(n))?(n-p).toFixed(2):''; };
-  const save = () => { addRaise({ ...form, employeeId:parseInt(form.employeeId), previous:parseFloat(form.previous), newRate:parseFloat(form.newRate), increase:parseFloat(form.increase) }); setModal(false); };
+  const save = async () => {
+    try {
+      await addRaise({ ...form, employeeId:parseInt(form.employeeId), previous:parseFloat(form.previous), newRate:parseFloat(form.newRate), increase:parseFloat(form.increase) });
+      setModal(false);
+    } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
+  };
 
   return (
     <div>
@@ -67,7 +73,8 @@ export default function Raises() {
       {modal && (
         <div className="modal-overlay" onClick={()=>setModal(false)}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
-            <div className="modal-header"><h3>Add Raise</h3><button className="btn-icon" onClick={()=>setModal(false)}><X size={18}/></button></div>
+            <div className="modal-header"><h3>Add Raise</h3><button className="btn-icon" onClick={()=>{ setModal(false); setSaveError(''); }}><X size={18}/></button></div>
+            {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
             <div className="form-grid">
               <label>Employee
                 <select style={inp} value={form.employeeId} onChange={e => {

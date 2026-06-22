@@ -21,10 +21,17 @@ export default function Uniforms() {
   const [form, setForm]   = useState(empty);
   const [stockModal, setStockModal] = useState(null);
   const [stockForm, setStockForm]   = useState(emptyStock);
+  const [issueError, setIssueError] = useState('');
 
-  const openEdit = (u) => { setForm({ ...u, employeeId:u.employee_id, issued:u.issued_date }); setModal(u); };
-  const closeModal = () => setModal(null);
-  const save = () => { const u={...form,employeeId:parseInt(form.employeeId),qty:parseInt(form.qty)}; if(modal==='add') addUniform(u); else updateUniform(u); closeModal(); };
+  const openEdit = (u) => { setForm({ ...u, employeeId:u.employee_id, issued:u.issued_date }); setIssueError(''); setModal(u); };
+  const closeModal = () => { setModal(null); setIssueError(''); };
+  const save = async () => {
+    try {
+      const u={...form,employeeId:parseInt(form.employeeId),qty:parseInt(form.qty)};
+      if(modal==='add') await addUniform(u); else await updateUniform(u);
+      closeModal();
+    } catch (e) { setIssueError(e.message || 'Save failed. Please try again.'); }
+  };
   const sc = (s) => STATUS_COLORS[s]||'#6b7280';
 
   const stock = data.uniformStock || [];
@@ -143,6 +150,7 @@ export default function Uniforms() {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header"><h3>{modal==='add'?'Issue Uniform':'Edit Uniform'}</h3><button className="btn-icon" onClick={closeModal}><X size={18}/></button></div>
+            {issueError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{issueError}</div>}
             <div className="form-grid">
               <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Item<select style={inp} value={form.item} onChange={e=>setForm(f=>({...f,item:e.target.value}))}>{ITEMS.map(i=><option key={i}>{i}</option>)}</select></label>

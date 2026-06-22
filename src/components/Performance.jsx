@@ -8,7 +8,13 @@ export default function Performance() {
   const { data, getEmployee, addPerformance, deletePerformance, isAdmin } = useApp();
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(empty);
-  const save = () => { addPerformance({ ...form, employeeId:parseInt(form.employeeId), jobsCompleted:parseInt(form.jobsCompleted), complaints:parseInt(form.complaints), rating:parseInt(form.rating) }); setModal(false); };
+  const [saveError, setSaveError] = useState('');
+  const save = async () => {
+    try {
+      await addPerformance({ ...form, employeeId:parseInt(form.employeeId), jobsCompleted:parseInt(form.jobsCompleted), complaints:parseInt(form.complaints), rating:parseInt(form.rating) });
+      setModal(false);
+    } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
+  };
   const ratingColor = (r) => r>=4?'#16a34a':r===3?'#f59e0b':'#dc2626';
   return (
     <div>
@@ -44,7 +50,8 @@ export default function Performance() {
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header"><h3>Add Performance Entry</h3><button className="btn-icon" onClick={() => setModal(false)}><X size={18} /></button></div>
+            <div className="modal-header"><h3>Add Performance Entry</h3><button className="btn-icon" onClick={() => { setModal(false); setSaveError(''); }}><X size={18} /></button></div>
+            {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
             <div className="form-grid">
               <label>Employee<select value={form.employeeId} onChange={e => setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select…</option>{(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Month (e.g. May 2026)<input value={form.month} onChange={e => setForm(f=>({...f,month:e.target.value}))} /></label>

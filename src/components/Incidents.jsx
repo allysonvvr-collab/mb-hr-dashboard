@@ -67,14 +67,17 @@ export default function Incidents() {
   const [form, setForm]         = useState(empty);
   const [view, setView]         = useState('summary');
   const [selectedEmp, setSelectedEmp] = useState(null);
+  const [saveError, setSaveError] = useState('');
 
-  const openAdd  = () => { setForm(empty); setModal('add'); };
-  const openEdit = (i) => { setForm({ ...i, employeeId:i.employee_id, date:i.incident_date, docSigned:i.doc_signed }); setModal(i); };
-  const closeModal = () => setModal(null);
-  const save = () => {
-    const i = { ...form, employeeId:parseInt(form.employeeId), cost:parseFloat(form.cost)||0 };
-    if (modal==='add') addIncident(i); else updateIncident(i);
-    closeModal();
+  const openAdd  = () => { setForm(empty); setSaveError(''); setModal('add'); };
+  const openEdit = (i) => { setForm({ ...i, employeeId:i.employee_id, date:i.incident_date, docSigned:i.doc_signed }); setSaveError(''); setModal(i); };
+  const closeModal = () => { setModal(null); setSaveError(''); };
+  const save = async () => {
+    try {
+      const i = { ...form, employeeId:parseInt(form.employeeId), cost:parseFloat(form.cost)||0 };
+      if (modal==='add') await addIncident(i); else await updateIncident(i);
+      closeModal();
+    } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
   };
 
   const allIncidents = data.incidents || [];
@@ -215,6 +218,7 @@ export default function Incidents() {
               <h3>{modal==='add'?'Log Damage':'Edit Damage'}</h3>
               <button className="btn-icon" onClick={closeModal}><X size={18}/></button>
             </div>
+            {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
             <div className="form-grid">
               <label>Employee
                 <select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}>

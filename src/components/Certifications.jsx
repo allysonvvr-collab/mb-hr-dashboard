@@ -15,10 +15,17 @@ export default function Certifications() {
   const { data, getEmployee, addCertification, updateCertification, deleteCertification, isAdmin } = useApp();
   const [modal, setModal] = useState(null);
   const [form, setForm]   = useState(empty);
+  const [saveError, setSaveError] = useState('');
 
-  const openEdit = (c) => { setForm({ ...c, employeeId:c.employee_id, earned:c.earned_date||'', expires:c.expires_date||'' }); setModal(c); };
-  const closeModal = () => setModal(null);
-  const save = () => { const c={...form,employeeId:parseInt(form.employeeId)}; if(modal==='add') addCertification(c); else updateCertification(c); closeModal(); };
+  const openEdit = (c) => { setForm({ ...c, employeeId:c.employee_id, earned:c.earned_date||'', expires:c.expires_date||'' }); setSaveError(''); setModal(c); };
+  const closeModal = () => { setModal(null); setSaveError(''); };
+  const save = async () => {
+    try {
+      const c={...form,employeeId:parseInt(form.employeeId)};
+      if(modal==='add') await addCertification(c); else await updateCertification(c);
+      closeModal();
+    } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
+  };
 
   return (
     <div>
@@ -81,6 +88,7 @@ export default function Certifications() {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
             <div className="modal-header"><h3>{modal==='add'?'Add Certification':'Edit Certification'}</h3><button className="btn-icon" onClick={closeModal}><X size={18}/></button></div>
+            {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
             <div className="form-grid">
               <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Certification<select style={inp} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}>{CERT_NAMES.map(n=><option key={n}>{n}</option>)}</select></label>

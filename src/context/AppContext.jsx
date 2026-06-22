@@ -113,43 +113,44 @@ export function AppProvider({ children }) {
   // ── CRUD helpers ─────────────────────────────────────────────
   const crud = {
     // EMPLOYEES
-    addEmployee:    async (e)  => { await supabase.from('employees').insert([{ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, photo_url:e.photo_url||null, active:true }]); fetchAll(); },
-    updateEmployee: async (e)  => { await supabase.from('employees').update({ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, photo_url:e.photo_url||null }).eq('id', e.id); fetchAll(); },
-    deleteEmployee: async (id) => { await supabase.from('employees').delete().eq('id', id); fetchAll(); },
+    addEmployee:    async (e)  => { const { error } = await supabase.from('employees').insert([{ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, photo_url:e.photo_url||null, active:true }]); if (error) throw error; fetchAll(); },
+    updateEmployee: async (e)  => { const { error } = await supabase.from('employees').update({ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, photo_url:e.photo_url||null }).eq('id', e.id); if (error) throw error; fetchAll(); },
+    deleteEmployee: async (id) => { const { error } = await supabase.from('employees').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // APPLICANTS
-    addApplicant:    async (a)  => { await supabase.from('applicants').insert([{ name:a.name, role:a.role, phone:a.phone, email:a.email, applied_date:a.applied_date||a.applied, status:a.status, stars:a.stars, notes:a.notes, source:a.source||null }]); fetchAll(); },
-    updateApplicant: async (a)  => { await supabase.from('applicants').update({ name:a.name, role:a.role, phone:a.phone, email:a.email, applied_date:a.applied_date||a.applied, status:a.status, stars:a.stars, notes:a.notes, source:a.source||null }).eq('id', a.id); fetchAll(); },
-    deleteApplicant: async (id) => { await supabase.from('applicants').delete().eq('id', id); fetchAll(); },
+    addApplicant:    async (a)  => { const { error } = await supabase.from('applicants').insert([{ name:a.name, role:a.role, phone:a.phone, email:a.email, applied_date:a.applied_date||a.applied, status:a.status, stars:a.stars, notes:a.notes, source:a.source||null }]); if (error) throw error; fetchAll(); },
+    updateApplicant: async (a)  => { const { error } = await supabase.from('applicants').update({ name:a.name, role:a.role, phone:a.phone, email:a.email, applied_date:a.applied_date||a.applied, status:a.status, stars:a.stars, notes:a.notes, source:a.source||null }).eq('id', a.id); if (error) throw error; fetchAll(); },
+    deleteApplicant: async (id) => { const { error } = await supabase.from('applicants').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // TIME OFF
-    addTimeOff:    async (t)  => { await supabase.from('time_off').insert([{ employee_id:parseInt(t.employeeId), type:t.type, start_date:t.startDate, end_date:t.endDate, half_day:t.halfDay, dates:t.dates, days:t.days, status:t.status, notes:t.notes }]); fetchAll(); },
-    updateTimeOff: async (t)  => { await supabase.from('time_off').update({ status:t.status, notes:t.notes, type:t.type, start_date:t.startDate, end_date:t.endDate, half_day:t.halfDay, dates:t.dates, days:t.days }).eq('id', t.id); fetchAll(); },
-    deleteTimeOff: async (id) => { await supabase.from('time_off').delete().eq('id', id); fetchAll(); },
+    addTimeOff:    async (t)  => { const { error } = await supabase.from('time_off').insert([{ employee_id:parseInt(t.employeeId), type:t.type, start_date:t.startDate, end_date:t.endDate, half_day:t.halfDay, dates:t.dates, days:t.days, status:t.status, notes:t.notes }]); if (error) throw error; fetchAll(); },
+    updateTimeOff: async (t)  => { const { error } = await supabase.from('time_off').update({ status:t.status, notes:t.notes, type:t.type, start_date:t.startDate, end_date:t.endDate, half_day:t.halfDay, dates:t.dates, days:t.days }).eq('id', t.id); if (error) throw error; fetchAll(); },
+    deleteTimeOff: async (id) => { const { error } = await supabase.from('time_off').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // RAISES
     addRaise:    async (r)  => {
-      await supabase.from('raises').insert([{ employee_id:parseInt(r.employeeId), raise_date:r.date, previous_rate:r.previous, new_rate:r.newRate, increase:r.increase, reason:r.reason }]);
+      const { error } = await supabase.from('raises').insert([{ employee_id:parseInt(r.employeeId), raise_date:r.date, previous_rate:r.previous, new_rate:r.newRate, increase:r.increase, reason:r.reason }]);
+      if (error) throw error;
       // Also update the employee's current wage so it matches
-      if (r.newRate) await supabase.from('employees').update({ wage: r.newRate }).eq('id', parseInt(r.employeeId));
+      if (r.newRate) { const { error: wageErr } = await supabase.from('employees').update({ wage: r.newRate }).eq('id', parseInt(r.employeeId)); if (wageErr) throw wageErr; }
       fetchAll();
     },
-    deleteRaise: async (id) => { await supabase.from('raises').delete().eq('id', id); fetchAll(); },
+    deleteRaise: async (id) => { const { error } = await supabase.from('raises').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // INCIDENTS
-    addIncident:    async (i)  => { await supabase.from('incidents').insert([{ employee_id:parseInt(i.employeeId), incident_date:i.date, description:i.description, cost:i.cost, status:i.status, doc_signed:i.docSigned }]); fetchAll(); },
-    updateIncident: async (i)  => { await supabase.from('incidents').update({ status:i.status, doc_signed:i.docSigned, description:i.description, cost:i.cost, incident_date:i.date }).eq('id', i.id); fetchAll(); },
-    deleteIncident: async (id) => { await supabase.from('incidents').delete().eq('id', id); fetchAll(); },
+    addIncident:    async (i)  => { const { error } = await supabase.from('incidents').insert([{ employee_id:parseInt(i.employeeId), incident_date:i.date, description:i.description, cost:i.cost, status:i.status, doc_signed:i.docSigned }]); if (error) throw error; fetchAll(); },
+    updateIncident: async (i)  => { const { error } = await supabase.from('incidents').update({ status:i.status, doc_signed:i.docSigned, description:i.description, cost:i.cost, incident_date:i.date }).eq('id', i.id); if (error) throw error; fetchAll(); },
+    deleteIncident: async (id) => { const { error } = await supabase.from('incidents').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // CERTIFICATIONS
-    addCertification:    async (c)  => { await supabase.from('certifications').insert([{ employee_id:parseInt(c.employeeId), name:c.name, earned_date:c.earned||null, expires_date:c.expires||null, status:c.status }]); fetchAll(); },
-    updateCertification: async (c)  => { await supabase.from('certifications').update({ name:c.name, earned_date:c.earned||null, expires_date:c.expires||null, status:c.status }).eq('id', c.id); fetchAll(); },
-    deleteCertification: async (id) => { await supabase.from('certifications').delete().eq('id', id); fetchAll(); },
+    addCertification:    async (c)  => { const { error } = await supabase.from('certifications').insert([{ employee_id:parseInt(c.employeeId), name:c.name, earned_date:c.earned||null, expires_date:c.expires||null, status:c.status }]); if (error) throw error; fetchAll(); },
+    updateCertification: async (c)  => { const { error } = await supabase.from('certifications').update({ name:c.name, earned_date:c.earned||null, expires_date:c.expires||null, status:c.status }).eq('id', c.id); if (error) throw error; fetchAll(); },
+    deleteCertification: async (id) => { const { error } = await supabase.from('certifications').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // UNIFORMS
-    addUniform:    async (u)  => { await supabase.from('uniforms').insert([{ employee_id:parseInt(u.employeeId), item:u.item, size:u.size, qty:u.qty, issued_date:u.issued, status:u.status }]); fetchAll(); },
-    updateUniform: async (u)  => { await supabase.from('uniforms').update({ item:u.item, size:u.size, qty:u.qty, issued_date:u.issued, status:u.status }).eq('id', u.id); fetchAll(); },
-    deleteUniform: async (id) => { await supabase.from('uniforms').delete().eq('id', id); fetchAll(); },
+    addUniform:    async (u)  => { const { error } = await supabase.from('uniforms').insert([{ employee_id:parseInt(u.employeeId), item:u.item, size:u.size, qty:u.qty, issued_date:u.issued, status:u.status }]); if (error) throw error; fetchAll(); },
+    updateUniform: async (u)  => { const { error } = await supabase.from('uniforms').update({ item:u.item, size:u.size, qty:u.qty, issued_date:u.issued, status:u.status }).eq('id', u.id); if (error) throw error; fetchAll(); },
+    deleteUniform: async (id) => { const { error } = await supabase.from('uniforms').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // UNIFORM STOCK (warehouse, unassigned)
     addStockItem:    async (s)  => { const { error } = await supabase.from('uniform_stock').upsert([{ item:s.item, size:s.size, qty:s.qty }], { onConflict: 'item,size' }); if (error) throw error; fetchAll(); },
@@ -161,21 +162,21 @@ export function AppProvider({ children }) {
     deleteObservation: async (id) => { const { error } = await supabase.from('observations').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // REVIEWS
-    addReview:    async (r)  => { await supabase.from('reviews').insert([{ employee_id:parseInt(r.employeeId), review_date:r.date, rating:r.rating, punctuality:r.punctuality, quality:r.quality, attitude:r.attitude, teamwork:r.teamwork, notes:r.notes, reviewed_by:user.id }]); fetchAll(); },
-    updateReview: async (r)  => { await supabase.from('reviews').update({ rating:r.rating, punctuality:r.punctuality, quality:r.quality, attitude:r.attitude, teamwork:r.teamwork, notes:r.notes, review_date:r.date }).eq('id', r.id); fetchAll(); },
-    deleteReview: async (id) => { await supabase.from('reviews').delete().eq('id', id); fetchAll(); },
+    addReview:    async (r)  => { const { error } = await supabase.from('reviews').insert([{ employee_id:parseInt(r.employeeId), review_date:r.date, rating:r.rating, punctuality:r.punctuality, quality:r.quality, attitude:r.attitude, teamwork:r.teamwork, notes:r.notes, reviewed_by:user.id }]); if (error) throw error; fetchAll(); },
+    updateReview: async (r)  => { const { error } = await supabase.from('reviews').update({ rating:r.rating, punctuality:r.punctuality, quality:r.quality, attitude:r.attitude, teamwork:r.teamwork, notes:r.notes, review_date:r.date }).eq('id', r.id); if (error) throw error; fetchAll(); },
+    deleteReview: async (id) => { const { error } = await supabase.from('reviews').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // PERFORMANCE
-    addPerformance:    async (p)  => { await supabase.from('performance').insert([{ employee_id:parseInt(p.employeeId), month:p.month, jobs_completed:p.jobsCompleted, complaints:p.complaints, rating:p.rating }]); fetchAll(); },
-    updatePerformance: async (p)  => { await supabase.from('performance').update({ month:p.month, jobs_completed:p.jobsCompleted, complaints:p.complaints, rating:p.rating }).eq('id', p.id); fetchAll(); },
-    deletePerformance: async (id) => { await supabase.from('performance').delete().eq('id', id); fetchAll(); },
+    addPerformance:    async (p)  => { const { error } = await supabase.from('performance').insert([{ employee_id:parseInt(p.employeeId), month:p.month, jobs_completed:p.jobsCompleted, complaints:p.complaints, rating:p.rating }]); if (error) throw error; fetchAll(); },
+    updatePerformance: async (p)  => { const { error } = await supabase.from('performance').update({ month:p.month, jobs_completed:p.jobsCompleted, complaints:p.complaints, rating:p.rating }).eq('id', p.id); if (error) throw error; fetchAll(); },
+    deletePerformance: async (id) => { const { error } = await supabase.from('performance').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
 
   };
 
   // ── BLACKLIST ─────────────────────────────────────────────────
-  const addBlacklist    = async (b) => { await supabase.from('blacklist').insert([{ name:b.name, position:b.position||null, phone:b.phone||null, reason:b.reason||null }]); fetchAll(); };
-  const deleteBlacklist = async (id) => { await supabase.from('blacklist').delete().eq('id', id); fetchAll(); };
+  const addBlacklist    = async (b) => { const { error } = await supabase.from('blacklist').insert([{ name:b.name, position:b.position||null, phone:b.phone||null, reason:b.reason||null }]); if (error) throw error; fetchAll(); };
+  const deleteBlacklist = async (id) => { const { error } = await supabase.from('blacklist').delete().eq('id', id); if (error) throw error; fetchAll(); };
 
   // ── Upload employee photo ────────────────────────────────────
   const uploadEmployeePhoto = async (employeeId, file) => {
@@ -187,7 +188,8 @@ export function AppProvider({ children }) {
     if (uploadError) throw new Error(uploadError.message);
     const { data } = supabase.storage.from('employee-photos').getPublicUrl(path);
     // Save URL to employee record
-    await supabase.from('employees').update({ photo_url: data.publicUrl }).eq('id', employeeId);
+    const { error: dbError } = await supabase.from('employees').update({ photo_url: data.publicUrl }).eq('id', employeeId);
+    if (dbError) throw new Error(dbError.message);
     fetchAll();
     return data.publicUrl;
   };
@@ -205,7 +207,7 @@ export function AppProvider({ children }) {
 
   // ── User management ──────────────────────────────────────────
   const getAllProfiles  = async () => { const { data: p } = await supabase.from('profiles').select('*').order('created_at'); return p || []; };
-  const updateUserRole  = async (uid, role) => { await supabase.from('profiles').update({ role }).eq('id', uid); };
+  const updateUserRole  = async (uid, role) => { const { error } = await supabase.from('profiles').update({ role }).eq('id', uid); if (error) throw error; };
   const inviteUser      = async (email, fullName) => {
     const { error } = await supabase.auth.signUp({ email, password: Math.random().toString(36).slice(-12), options: { data: { full_name: fullName }, emailRedirectTo: window.location.origin } });
     return error;
