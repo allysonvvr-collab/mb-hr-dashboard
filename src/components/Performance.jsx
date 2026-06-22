@@ -4,7 +4,7 @@ import Avatar from './Avatar';
 import { Plus, Edit2, Trash2, X, Check, TrendingUp, BarChart3 } from 'lucide-react';
 import { TabHeader } from './TabHeader';
 import { ratingColor } from '../lib/statusColors';
-import { formatMonthSA, thisMonthSA } from '../lib/timezone';
+import { formatMonthSA, formatMonthOnlySA, thisMonthSA } from '../lib/timezone';
 import EmptyState from './EmptyState';
 
 const empty = { employeeId:'', month: thisMonthSA(), jobsCompleted:'', complaints:0, rating:4 };
@@ -141,7 +141,7 @@ export default function Performance({ goToObservation }) {
                 <div className="perf-stats">
                   <div className="perf-stat">
                     <div className="perf-stat-label">Month</div>
-                    <div className="perf-stat-value" style={{ fontSize:13, color: hasEntry ? 'inherit' : '#9ca3af' }}>{hasEntry ? formatMonthSA(entry.month) : '—'}</div>
+                    <div className="perf-stat-value" style={{ fontSize:13, color: hasEntry ? 'inherit' : '#9ca3af' }}>{hasEntry ? formatMonthOnlySA(entry.month) : '—'}</div>
                   </div>
                   <div className="perf-stat">
                     <div className="perf-stat-label">Complaints</div>

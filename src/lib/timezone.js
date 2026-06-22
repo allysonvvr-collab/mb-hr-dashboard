@@ -87,6 +87,14 @@ export function formatMonthSA(monthStr) {
   return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
+/** Month name only, no year — for tight UI columns where the year would be clutter */
+export function formatMonthOnlySA(monthStr) {
+  if (!monthStr) return '—';
+  const [y, m] = monthStr.split('-').map(Number);
+  if (!y || !m) return monthStr.split(' ')[0] || monthStr; // fallback for old "May 2026" text
+  return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short' });
+}
+
 /** Returns the current month as YYYY-MM, for <input type="month"> default values */
 export function thisMonthSA() {
   const d = nowSA();

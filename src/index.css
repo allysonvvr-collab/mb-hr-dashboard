@@ -419,7 +419,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 .perf-identity {
   display: flex;
@@ -430,9 +430,10 @@ body {
 }
 .perf-stats {
   display: grid;
-  grid-template-columns: 70px 90px 100px;
+  grid-template-columns: 60px 90px 100px;
   align-items: center;
   gap: 14px;
+  flex-shrink: 0;
 }
 .perf-stat { text-align: center; }
 .perf-stat-label {
@@ -457,6 +458,12 @@ body {
   gap: 6px;
   justify-content: flex-end;
 }
+.perf-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
 
 @media (max-width: 639px) {
   .perf-row {
@@ -471,10 +478,8 @@ body {
     width: 100%;
   }
   .perf-bottom-row {
-    display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 10px;
+    width: 100%;
   }
 }
 
