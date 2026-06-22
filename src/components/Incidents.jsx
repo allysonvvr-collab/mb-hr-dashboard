@@ -8,7 +8,8 @@ import EmptyState from './EmptyState';
 import { idsMatch } from '../lib/ids';
 
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
-const empty = { employeeId:'', date:todaySA(), description:'', cost:'', status:'Open', docSigned:false };
+const empty = { employeeId:'', date:todaySA(), description:'', cost:'', status:'Open', docSigned:false, crew:'' };
+const CREWS = ['MC1', 'MC2', 'MC3', 'MC4', 'FWC1', 'FWC2', 'Christmas'];
 
 function EmployeeSummaryCard({ emp, incidents, onViewAll }) {
   const total = incidents.reduce((s,i) => s + Number(i.cost||0), 0);
@@ -72,7 +73,8 @@ export default function Incidents() {
   const [saveError, setSaveError] = useState('');
 
   const openAdd  = () => { setForm(empty); setSaveError(''); setModal('add'); };
-  const openEdit = (i) => { setForm({ ...i, employeeId:i.employee_id, date:i.incident_date, docSigned:i.doc_signed }); setSaveError(''); setModal(i); };
+  const openAddFor = (employeeId) => { setForm({ ...empty, employeeId: String(employeeId) }); setSaveError(''); setModal('add'); };
+  const openEdit = (i) => { setForm({ ...i, employeeId:i.employee_id, date:i.incident_date, docSigned:i.doc_signed, crew:i.crew||'' }); setSaveError(''); setModal(i); };
   const closeModal = () => { setModal(null); setSaveError(''); };
   const save = async () => {
     try {
@@ -173,7 +175,7 @@ export default function Incidents() {
       {view === 'all' && (
         <div>
           {selectedEmp && (
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, padding:'8px 12px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, padding:'8px 12px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb', flexWrap:'wrap' }}>
               <button onClick={()=>{ setSelectedEmp(null); setView('summary'); }}
                 style={{ background:'none', border:'none', color:'#1B3A2D', fontSize:13, fontWeight:600, cursor:'pointer', textDecoration:'underline' }}>
                 All Employees
@@ -184,6 +186,7 @@ export default function Incidents() {
                 {displayedIncidents.length} damage{displayedIncidents.length!==1?'s':''} · 
                 ${displayedIncidents.reduce((s,i)=>s+Number(i.cost||0),0).toLocaleString()} total
               </span>
+              {isAdmin && <button className="btn-primary" style={{ fontSize:12, padding:'6px 12px' }} onClick={()=>openAddFor(selectedEmp)}><Plus size={13}/> Log Damage</button>}
             </div>
           )}
 
@@ -202,6 +205,11 @@ export default function Incidents() {
                         <span style={{ background:inc.status==='Closed'?'#dcfce7':'#fef3c7', color:inc.status==='Closed'?'#166534':'#92400e', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
                           {inc.status}
                         </span>
+                        {inc.crew && (
+                          <span style={{ background:'#f3f4f6', color:'#374151', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
+                            {inc.crew}
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize:13, color:'#374151', marginBottom:4 }}>{inc.description}</div>
                       <div style={{ fontSize:12, fontWeight:600, color:inc.doc_signed?'#16a34a':'#f59e0b' }}>
@@ -232,10 +240,25 @@ export default function Incidents() {
             </div>
             {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
             <div className="form-grid">
-              <label>Employee
-                <select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}>
+              {getEmployee(parseInt(form.employeeId)) ? (
+                <label>Employee
+                  <div style={{ ...inp, background:'#f9fafb', display:'flex', alignItems:'center', gap:8 }}>
+                    <Avatar name={getEmployee(parseInt(form.employeeId))?.name||'?'} photoUrl={getEmployee(parseInt(form.employeeId))?.photo_url} size={22} />
+                    {getEmployee(parseInt(form.employeeId))?.name}
+                  </div>
+                </label>
+              ) : (
+                <label>Employee
+                  <select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}>
+                    <option value="">Select...</option>
+                    {(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+                  </select>
+                </label>
+              )}
+              <label>Crew
+                <select style={inp} value={form.crew} onChange={e=>setForm(f=>({...f,crew:e.target.value}))}>
                   <option value="">Select...</option>
-                  {(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}
+                  {CREWS.map(c=><option key={c}>{c}</option>)}
                 </select>
               </label>
               <label>Date<input style={inp} type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></label>

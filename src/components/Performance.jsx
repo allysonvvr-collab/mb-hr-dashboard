@@ -62,7 +62,7 @@ export default function Performance({ goToObservation }) {
   const rows = employees
     .filter(emp => filterRole === 'All' || emp.role === filterRole)
     .map(emp => {
-      const empEntries = entries.filter(p => idsMatch(p.employee_id, emp.id)).sort((a,b)=>(b.month||'').localeCompare(a.month||''));
+      const empEntries = entries.filter(p => idsMatch(p.employee_id, emp.id)).sort((a,b)=>toMonthInputValue(b.month).localeCompare(toMonthInputValue(a.month)));
       return { emp, entry: empEntries[0] || null };
     })
     .sort((a,b) => a.emp.name.localeCompare(b.emp.name));

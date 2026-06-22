@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { Plus, Trash2, X, Check, ArrowLeft, ClipboardList, UserX } from 'lucide-react';
+import { Plus, Trash2, X, Check, ArrowLeft, ClipboardList, UserX, Edit2 } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 import EmptyState from './EmptyState';
@@ -30,10 +30,11 @@ function countBadge(count) {
 }
 
 export default function Observations({ observationTarget, clearObservationTarget }) {
-  const { data, addObservation, deleteObservation, isAdmin } = useApp();
+  const { data, addObservation, updateObservation, deleteObservation, isAdmin } = useApp();
   const [selectedId, setSelectedId] = useState(null);
-  const [modal, setModal] = useState(false);
+  const [modal, setModal] = useState(null); // 'add' | observation object | null
   const [form, setForm] = useState({ date: todaySA(), notes: '' });
+  const [saveError, setSaveError] = useState('');
 
   // If another tab asked to deep-link here for a specific employee, open their profile immediately
   useEffect(() => {
@@ -59,10 +60,19 @@ export default function Observations({ observationTarget, clearObservationTarget
   const selected = eligible.find(e => idsMatch(e.id, selectedId));
   const selectedObs = selectedId ? (obsByEmployee[selectedId] || []) : [];
 
-  const save = () => {
-    addObservation({ employeeId: selectedId, date: form.date, notes: form.notes });
-    setForm({ date: todaySA(), notes: '' });
-    setModal(false);
+  const openAdd = () => { setForm({ date: todaySA(), notes: '' }); setSaveError(''); setModal('add'); };
+  const openEdit = (o) => { setForm({ date: o.obs_date, notes: o.notes, id: o.id }); setSaveError(''); setModal(o); };
+  const closeModal = () => { setModal(null); setSaveError(''); };
+
+  const save = async () => {
+    try {
+      if (modal === 'add') {
+        await addObservation({ employeeId: selectedId, date: form.date, notes: form.notes });
+      } else {
+        await updateObservation({ id: form.id, date: form.date, notes: form.notes });
+      }
+      closeModal();
+    } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
   };
 
   // ===== PROFILE / DETAIL VIEW =====
@@ -79,11 +89,17 @@ export default function Observations({ observationTarget, clearObservationTarget
             <div style={{ fontSize:19, fontWeight:800 }}>{selected.name}</div>
             <div style={{ fontSize:13, color:'#6b7280' }}>{selected.role}</div>
           </div>
-          {countBadge(countLast90Days(selectedObs))}
+          <div style={{ textAlign:'right' }}>
+            <div style={{ fontSize:18, fontWeight:800, color: selectedObs.length>0?'#1B3A2D':'#9ca3af', fontFamily:'Manrope,sans-serif' }}>
+              {selectedObs.length}
+            </div>
+            <div style={{ fontSize:11, color:'#6b7280', marginBottom:6 }}>running total</div>
+            {countBadge(countLast90Days(selectedObs))}
+          </div>
         </div>
 
         <TabHeader title="Observation Log" settings={<p style={{ fontSize:13, color:'#6b7280' }}>A running thread of notes for this employee, most recent first.</p>}>
-          {isAdmin && <button className="btn-primary" onClick={()=>{ setForm({ date: todaySA(), notes: '' }); setModal(true); }}><Plus size={15}/> Add Observation</button>}
+          {isAdmin && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Add Observation</button>}
         </TabHeader>
 
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
@@ -94,7 +110,12 @@ export default function Observations({ observationTarget, clearObservationTarget
                   <div style={{ fontSize:12, fontWeight:700, color:'#1B3A2D', marginBottom:4 }}>{formatDateSA(o.obs_date)}</div>
                   <div style={{ fontSize:13, color:'#374151', whiteSpace:'pre-wrap' }}>{o.notes}</div>
                 </div>
-                {isAdmin && <button className="btn-icon danger" onClick={()=>deleteObservation(o.id)}><Trash2 size={13}/></button>}
+                {isAdmin && (
+                  <div style={{ display:'flex', gap:6, flexShrink:0 }}>
+                    <button className="btn-icon" onClick={()=>openEdit(o)}><Edit2 size={13}/></button>
+                    <button className="btn-icon danger" onClick={()=>deleteObservation(o.id)}><Trash2 size={13}/></button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -102,15 +123,16 @@ export default function Observations({ observationTarget, clearObservationTarget
         </div>
 
         {modal && (
-          <div className="modal-overlay" onClick={()=>setModal(false)}>
+          <div className="modal-overlay" onClick={closeModal}>
             <div className="modal" onClick={e=>e.stopPropagation()}>
-              <div className="modal-header"><h3>Add Observation</h3><button className="btn-icon" onClick={()=>setModal(false)}><X size={18}/></button></div>
+              <div className="modal-header"><h3>{modal === 'add' ? 'Add Observation' : 'Edit Observation'}</h3><button className="btn-icon" onClick={closeModal}><X size={18}/></button></div>
+              {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
               <div className="form-grid">
                 <label style={{ gridColumn:'1/-1' }}>Date<input style={inp} type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))} /></label>
                 <label style={{ gridColumn:'1/-1' }}>Notes<textarea style={{ ...inp, resize:'vertical' }} rows={5} value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))} placeholder="What did you observe?" /></label>
               </div>
               <div className="modal-footer">
-                <button className="btn-secondary" onClick={()=>setModal(false)}>Cancel</button>
+                <button className="btn-secondary" onClick={closeModal}>Cancel</button>
                 <button className="btn-primary" onClick={save} disabled={!form.notes.trim()}><Check size={15}/> Save</button>
               </div>
             </div>
@@ -130,8 +152,9 @@ export default function Observations({ observationTarget, clearObservationTarget
         {eligible.map(emp => {
           const obs = obsByEmployee[emp.id] || [];
           const count90 = countLast90Days(obs);
+          const hasFlag = count90 >= 2;
           return (
-            <div key={emp.id} className="emp-card" style={{ cursor:'pointer' }} onClick={()=>setSelectedId(emp.id)}>
+            <div key={emp.id} className="emp-card" style={{ cursor:'pointer', borderLeft:`3px solid ${hasFlag?'#f59e0b':'#e5e7eb'}` }} onClick={()=>setSelectedId(emp.id)}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
                 <div style={{ display:'flex', gap:10, alignItems:'center' }}>
                   <Avatar name={emp.name} photoUrl={emp.photo_url} size={38} />
@@ -140,11 +163,16 @@ export default function Observations({ observationTarget, clearObservationTarget
                     <div style={{ fontSize:12, color:'#6b7280' }}>{emp.role}</div>
                   </div>
                 </div>
+                <div style={{ textAlign:'right' }}>
+                  <div style={{ fontSize:18, fontWeight:800, color: obs.length>0?'#1B3A2D':'#9ca3af', fontFamily:'Manrope,sans-serif' }}>
+                    {obs.length}
+                  </div>
+                  <div style={{ fontSize:11, color:'#6b7280' }}>running total</div>
+                </div>
               </div>
-              <div style={{ marginTop:10, display:'flex', alignItems:'center', gap:8 }}>
-                <ClipboardList size={13} color="#9ca3af" />
-                <span style={{ fontSize:12, color:'#6b7280' }}>{obs.length} total</span>
-                <span style={{ marginLeft:'auto' }}>{countBadge(count90)}</span>
+
+              <div style={{ display:'flex', gap:8, marginTop:10, flexWrap:'wrap' }}>
+                {countBadge(count90)}
               </div>
             </div>
           );

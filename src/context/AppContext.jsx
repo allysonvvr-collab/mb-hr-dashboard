@@ -139,8 +139,8 @@ export function AppProvider({ children }) {
     deleteRaise: async (id) => { const { error } = await supabase.from('raises').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // INCIDENTS
-    addIncident:    async (i)  => { const { error } = await supabase.from('incidents').insert([{ employee_id:parseInt(i.employeeId), incident_date:i.date, description:i.description, cost:i.cost, status:i.status, doc_signed:i.docSigned }]); if (error) throw error; fetchAll(); },
-    updateIncident: async (i)  => { const { error } = await supabase.from('incidents').update({ status:i.status, doc_signed:i.docSigned, description:i.description, cost:i.cost, incident_date:i.date }).eq('id', i.id); if (error) throw error; fetchAll(); },
+    addIncident:    async (i)  => { const { error } = await supabase.from('incidents').insert([{ employee_id:parseInt(i.employeeId), incident_date:i.date, description:i.description, cost:i.cost, status:i.status, doc_signed:i.docSigned, crew:i.crew||null }]); if (error) throw error; fetchAll(); },
+    updateIncident: async (i)  => { const { error } = await supabase.from('incidents').update({ status:i.status, doc_signed:i.docSigned, description:i.description, cost:i.cost, incident_date:i.date, crew:i.crew||null }).eq('id', i.id); if (error) throw error; fetchAll(); },
     deleteIncident: async (id) => { const { error } = await supabase.from('incidents').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // CERTIFICATIONS
@@ -160,6 +160,7 @@ export function AppProvider({ children }) {
 
     // OBSERVATIONS (per-employee notes thread)
     addObservation:    async (o)  => { const { error } = await supabase.from('observations').insert([{ employee_id:parseInt(o.employeeId), obs_date:o.date, notes:o.notes }]); if (error) throw error; fetchAll(); },
+    updateObservation: async (o)  => { const { error } = await supabase.from('observations').update({ obs_date:o.date, notes:o.notes }).eq('id', o.id); if (error) throw error; fetchAll(); },
     deleteObservation: async (id) => { const { error } = await supabase.from('observations').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // REVIEWS
