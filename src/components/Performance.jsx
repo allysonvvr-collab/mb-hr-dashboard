@@ -4,9 +4,10 @@ import Avatar from './Avatar';
 import { Plus, Edit2, Trash2, X, Check, TrendingUp, BarChart3 } from 'lucide-react';
 import { TabHeader } from './TabHeader';
 import { ratingColor } from '../lib/statusColors';
+import { formatMonthSA, thisMonthSA } from '../lib/timezone';
 import EmptyState from './EmptyState';
 
-const empty = { employeeId:'', month:'', jobsCompleted:'', complaints:0, rating:4 };
+const empty = { employeeId:'', month: thisMonthSA(), jobsCompleted:'', complaints:0, rating:4 };
 
 // Owner and Operations Manager don't get performance entries — exclude from this list,
 // matching the same exclusion used in the Observation Log.
@@ -23,9 +24,19 @@ export default function Performance({ goToObservation }) {
   const employees = (data.employees || []).filter(e => !EXCLUDED_ROLES.includes(e.role));
   const roles = [...new Set(employees.map(e => e.role))].sort();
 
+  // Legacy entries may have free-text months like "May 2026" instead of "2026-05" —
+  // convert on edit so the native month picker doesn't show blank for old data.
+  const toMonthInputValue = (m) => {
+    if (!m) return thisMonthSA();
+    if (/^\d{4}-\d{2}$/.test(m)) return m; // already correct format
+    const parsed = new Date(`1 ${m}`);
+    if (isNaN(parsed)) return thisMonthSA();
+    return `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}`;
+  };
+
   const openAdd  = () => { setForm(empty); setSaveError(''); setModal('add'); };
   const openAddFor = (employeeId) => { setForm({ ...empty, employeeId: String(employeeId) }); setSaveError(''); setModal('add'); };
-  const openEdit = (p) => { setForm({ employeeId:p.employee_id, month:p.month, jobsCompleted:p.jobs_completed, complaints:p.complaints, rating:p.rating, id:p.id }); setSaveError(''); setModal(p); };
+  const openEdit = (p) => { setForm({ employeeId:p.employee_id, month: toMonthInputValue(p.month), jobsCompleted:p.jobs_completed, complaints:p.complaints, rating:p.rating, id:p.id }); setSaveError(''); setModal(p); };
   const closeModal = () => { setModal(null); setSaveError(''); };
 
   const save = async () => {
@@ -83,7 +94,7 @@ export default function Performance({ goToObservation }) {
         <div className="alert-banner" style={{ background:'#f0fdf4', borderColor:'#86efac', color:'#166534', marginBottom:16 }}>
           <TrendingUp size={15} style={{ flexShrink:0 }} />
           <div>
-            <strong>{topEmp.name}</strong> is the top performer this batch — {topPerformer.jobs_completed} complaint{topPerformer.jobs_completed!==1?'s':''}, {topPerformer.rating}/5 rating ({topPerformer.month}).
+            <strong>{topEmp.name}</strong> is the top performer this batch — {topPerformer.jobs_completed} complaint{topPerformer.jobs_completed!==1?'s':''}, {topPerformer.rating}/5 rating ({formatMonthSA(topPerformer.month)}).
           </div>
         </div>
       )}
@@ -130,7 +141,7 @@ export default function Performance({ goToObservation }) {
                 <div className="perf-stats">
                   <div className="perf-stat">
                     <div className="perf-stat-label">Month</div>
-                    <div className="perf-stat-value" style={{ fontSize:13, color: hasEntry ? 'inherit' : '#9ca3af' }}>{hasEntry ? entry.month : '—'}</div>
+                    <div className="perf-stat-value" style={{ fontSize:13, color: hasEntry ? 'inherit' : '#9ca3af' }}>{hasEntry ? formatMonthSA(entry.month) : '—'}</div>
                   </div>
                   <div className="perf-stat">
                     <div className="perf-stat-label">Complaints</div>
@@ -178,7 +189,7 @@ export default function Performance({ goToObservation }) {
             {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
             <div className="form-grid">
               <label>Employee<select value={form.employeeId} onChange={e => setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select…</option>{employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
-              <label>Month (e.g. May 2026)<input value={form.month} onChange={e => setForm(f=>({...f,month:e.target.value}))} /></label>
+              <label>Month<input type="month" value={form.month} onChange={e => setForm(f=>({...f,month:e.target.value}))} /></label>
               <label>Complaints<input type="number" value={form.jobsCompleted} onChange={e => setForm(f=>({...f,jobsCompleted:e.target.value}))} /></label>
               <label>Observations<input type="number" min="0" value={form.complaints} onChange={e => setForm(f=>({...f,complaints:e.target.value}))} /></label>
               <label>Rating (1–5)<input type="number" min="1" max="5" value={form.rating} onChange={e => setForm(f=>({...f,rating:e.target.value}))} /></label>

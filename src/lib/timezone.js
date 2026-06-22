@@ -79,7 +79,19 @@ export function daysUntilBirthday(birthdayStr) {
   return Math.ceil((bday - today) / (1000 * 60 * 60 * 24));
 }
 
-/** Format just the month/day of a birthday as MM/DD (no year, since birthdays repeat yearly) */
+/** Format a YYYY-MM value (from <input type="month">) as "May 2026" */
+export function formatMonthSA(monthStr) {
+  if (!monthStr) return '—';
+  const [y, m] = monthStr.split('-').map(Number);
+  if (!y || !m) return monthStr; // fallback for old free-text entries like "May 2026"
+  return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+/** Returns the current month as YYYY-MM, for <input type="month"> default values */
+export function thisMonthSA() {
+  const d = nowSA();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
 export function formatBirthdaySA(birthdayStr) {
   const md = birthdayMonthDay(birthdayStr);
   if (!md) return '—';
