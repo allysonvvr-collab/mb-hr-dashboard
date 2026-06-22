@@ -5,6 +5,7 @@ import { Plus, Edit2, Trash2, X, Check, AlertTriangle, DollarSign, User, ShieldC
 import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 import EmptyState from './EmptyState';
+import { idsMatch } from '../lib/ids';
 
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
 const empty = { employeeId:'', date:todaySA(), description:'', cost:'', status:'Open', docSigned:false };
@@ -86,18 +87,18 @@ export default function Incidents() {
   const open  = allIncidents.filter(i => i.status==='Open').length;
 
   const byEmployee = (data.employees||[])
-    .map(emp => ({ emp, incidents: allIncidents.filter(i => i.employee_id === emp.id) }))
+    .map(emp => ({ emp, incidents: allIncidents.filter(i => idsMatch(i.employee_id, emp.id)) }))
     .filter(x => x.incidents.length > 0)
     .sort((a,b) => b.incidents.reduce((s,i)=>s+Number(i.cost||0),0) - a.incidents.reduce((s,i)=>s+Number(i.cost||0),0));
 
   const displayedIncidents = selectedEmp
-    ? allIncidents.filter(i => i.employee_id === selectedEmp)
+    ? allIncidents.filter(i => idsMatch(i.employee_id, selectedEmp))
     : allIncidents;
 
-  const selectedEmpObj = selectedEmp ? (data.employees||[]).find(e => e.id === selectedEmp) : null;
+  const selectedEmpObj = selectedEmp ? (data.employees||[]).find(e => idsMatch(e.id, selectedEmp)) : null;
 
   // Highlight employees with a clean record — only meaningful once there's at least one damage case to contrast against
-  const cleanRecordEmps = (data.employees||[]).filter(e => !allIncidents.find(i=>i.employee_id===e.id));
+  const cleanRecordEmps = (data.employees||[]).filter(e => !allIncidents.find(i=>idsMatch(i.employee_id, e.id)));
   const showCleanBanner = allIncidents.length > 0 && cleanRecordEmps.length > 0;
 
   return (
@@ -154,18 +155,15 @@ export default function Incidents() {
                 onViewAll={() => { setSelectedEmp(emp.id); setView('all'); }} />
             ))}
           </div>
-          {(data.employees||[]).filter(e => !allIncidents.find(i=>i.employee_id===e.id)).length > 0 && (
+          {cleanRecordEmps.length > 0 && (
             <div style={{ marginTop:20 }}>
               <div style={{ fontSize:12, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:8 }}>No Damages</div>
               <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-                {(data.employees||[])
-                  .filter(e => !allIncidents.find(i=>i.employee_id===e.id))
-                  .map(e => (
-                    <span key={e.id} style={{ background:'#f0fdf4', border:'1px solid #86efac', color:'#166534', fontSize:12, fontWeight:600, padding:'4px 12px', borderRadius:20 }}>
-                      {e.name}
-                    </span>
-                  ))
-                }
+                {cleanRecordEmps.map(e => (
+                  <span key={e.id} style={{ background:'#f0fdf4', border:'1px solid #86efac', color:'#166534', fontSize:12, fontWeight:600, padding:'4px 12px', borderRadius:20 }}>
+                    {e.name}
+                  </span>
+                ))}
               </div>
             </div>
           )}

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { idsMatch } from '../lib/ids';
 
 const AppContext = createContext(null);
 
@@ -106,7 +107,7 @@ export function AppProvider({ children }) {
   };
 
   // ── Helpers ──────────────────────────────────────────────────
-  const getEmployee  = (id) => data.employees.find(e => e.id === id);
+  const getEmployee  = (id) => data.employees.find(e => idsMatch(e.id, id));
   const isSuperAdmin = profile?.role === 'super_admin' || user?.email === 'office@macariobros.com';
   const isAdmin      = isSuperAdmin || profile?.role === 'admin';
 

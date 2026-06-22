@@ -5,9 +5,8 @@ import { Plus, Trash2, X, Check, ArrowLeft, ClipboardList, UserX } from 'lucide-
 import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 import EmptyState from './EmptyState';
-
-// Roles excluded from observation tracking — leadership only, not field/office staff
-const EXCLUDED_ROLES = ['Owner', 'Operations Manager'];
+import { idsMatch } from '../lib/ids';
+import { NON_TRACKED_ROLES } from '../lib/roles';
 
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
 
@@ -45,7 +44,7 @@ export default function Observations({ observationTarget, clearObservationTarget
   }, [observationTarget]);
 
   const eligible = (data.employees || [])
-    .filter(e => !EXCLUDED_ROLES.includes(e.role))
+    .filter(e => !NON_TRACKED_ROLES.includes(e.role))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const allObs = data.observations || [];
@@ -57,7 +56,7 @@ export default function Observations({ observationTarget, clearObservationTarget
     return map;
   }, [allObs]);
 
-  const selected = eligible.find(e => e.id === selectedId);
+  const selected = eligible.find(e => idsMatch(e.id, selectedId));
   const selectedObs = selectedId ? (obsByEmployee[selectedId] || []) : [];
 
   const save = () => {

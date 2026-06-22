@@ -6,12 +6,12 @@ import { TabHeader } from './TabHeader';
 import { ratingColor } from '../lib/statusColors';
 import { formatMonthSA, thisMonthSA } from '../lib/timezone';
 import EmptyState from './EmptyState';
-
-const empty = { employeeId:'', month: thisMonthSA(), jobsCompleted:'', complaints:0, rating:4 };
+import { idsMatch } from '../lib/ids';
+import { NON_TRACKED_ROLES } from '../lib/roles';
 
 // Owner and Operations Manager don't get performance entries — exclude from this list,
 // matching the same exclusion used in the Observation Log.
-const EXCLUDED_ROLES = ['Owner', 'Operations Manager'];
+const empty = { employeeId:'', month: thisMonthSA(), jobsCompleted:'', complaints:0, rating:4 };
 
 export default function Performance({ goToObservation }) {
   const { data, getEmployee, addPerformance, updatePerformance, deletePerformance, isAdmin } = useApp();
@@ -21,7 +21,7 @@ export default function Performance({ goToObservation }) {
   const [filterRole, setFilterRole] = useState('All');
 
   const entries = data.performance || [];
-  const employees = (data.employees || []).filter(e => !EXCLUDED_ROLES.includes(e.role));
+  const employees = (data.employees || []).filter(e => !NON_TRACKED_ROLES.includes(e.role));
   const roles = [...new Set(employees.map(e => e.role))].sort();
 
   // Legacy entries may have free-text months like "May 2026" instead of "2026-05" —
@@ -62,7 +62,7 @@ export default function Performance({ goToObservation }) {
   const rows = employees
     .filter(emp => filterRole === 'All' || emp.role === filterRole)
     .map(emp => {
-      const empEntries = entries.filter(p => p.employee_id === emp.id).sort((a,b)=>(b.month||'').localeCompare(a.month||''));
+      const empEntries = entries.filter(p => idsMatch(p.employee_id, emp.id)).sort((a,b)=>(b.month||'').localeCompare(a.month||''));
       return { emp, entry: empEntries[0] || null };
     })
     .sort((a,b) => a.emp.name.localeCompare(b.emp.name));

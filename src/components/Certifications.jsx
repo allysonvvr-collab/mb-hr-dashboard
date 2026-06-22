@@ -5,6 +5,7 @@ import { Plus, Edit2, Trash2, X, Check, Award } from 'lucide-react';
 import { formatDateSA } from '../lib/timezone';
 import { statusColor, statusBadgeStyle } from '../lib/statusColors';
 import EmptyState from './EmptyState';
+import { idsMatch } from '../lib/ids';
 import { TabHeader } from './TabHeader';
 
 const CERT_NAMES = ['OSHA 10','OSHA 30','Pesticide Applicator License','QuickBooks Certified','First Aid/CPR',"Driver's License",'CDL'];
@@ -68,7 +69,7 @@ export default function Certifications() {
       <h3 style={{ marginTop:24, marginBottom:10, fontSize:12, fontWeight:700, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.05em' }}>Coverage by Employee</h3>
       <div className="card-grid" style={{ gridTemplateColumns:'repeat(auto-fill, minmax(160px,1fr))' }}>
         {(data.employees||[]).map(emp => {
-          const certs = (data.certifications||[]).filter(c=>c.employee_id===emp.id);
+          const certs = (data.certifications||[]).filter(c=>idsMatch(c.employee_id, emp.id));
           return (
             <div key={emp.id} className="emp-card" style={{ padding:'12px 14px' }}>
               <div style={{ fontWeight:700, fontSize:13, marginBottom:2 }}>{emp.name}</div>
