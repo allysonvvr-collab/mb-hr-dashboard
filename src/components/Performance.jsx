@@ -4,7 +4,7 @@ import Avatar from './Avatar';
 import { Plus, Edit2, Trash2, X, Check, TrendingUp, BarChart3 } from 'lucide-react';
 import { TabHeader } from './TabHeader';
 import { ratingColor } from '../lib/statusColors';
-import { formatMonthSA, formatMonthOnlySA, thisMonthSA } from '../lib/timezone';
+import { formatMonthSA, thisMonthSA } from '../lib/timezone';
 import EmptyState from './EmptyState';
 
 const empty = { employeeId:'', month: thisMonthSA(), jobsCompleted:'', complaints:0, rating:4 };
@@ -52,9 +52,9 @@ export default function Performance({ goToObservation }) {
   const totalComplaints = entries.reduce((s, p) => s + Number(p.complaints || 0), 0);
   const avgRating = entries.length ? (entries.reduce((s, p) => s + Number(p.rating || 0), 0) / entries.length) : 0;
 
-  // Top performer this batch — highest rating, tie-broken by fewest complaints
+  // Top performer this batch — highest rating, tie-broken by most jobs done
   const topPerformer = entries.length
-    ? [...entries].sort((a, b) => (b.rating - a.rating) || (a.jobs_completed - b.jobs_completed))[0]
+    ? [...entries].sort((a, b) => (b.rating - a.rating) || (b.jobs_completed - a.jobs_completed))[0]
     : null;
   const topEmp = topPerformer ? getEmployee(topPerformer.employee_id) : null;
 
@@ -76,12 +76,12 @@ export default function Performance({ goToObservation }) {
             <div className="stat-label">Entries Logged</div>
           </div>
           <div className="stat-card">
-            <div className="stat-num" style={{ color: totalJobs > 0 ? '#dc2626' : '#16a34a' }}>{totalJobs.toLocaleString()}</div>
-            <div className="stat-label">Total Complaints</div>
+            <div className="stat-num">{totalJobs.toLocaleString()}</div>
+            <div className="stat-label">Total Jobs Done</div>
           </div>
           <div className="stat-card">
-            <div className="stat-num" style={{ color:'#374151' }}>{totalComplaints}</div>
-            <div className="stat-label">Total Observations</div>
+            <div className="stat-num" style={{ color: totalComplaints > 0 ? '#dc2626' : '#16a34a' }}>{totalComplaints}</div>
+            <div className="stat-label">Total Complaints</div>
           </div>
           <div className="stat-card">
             <div className="stat-num" style={{ color: ratingColor(Math.round(avgRating)) }}>{avgRating.toFixed(1)}/5</div>
@@ -94,7 +94,7 @@ export default function Performance({ goToObservation }) {
         <div className="alert-banner" style={{ background:'#f0fdf4', borderColor:'#86efac', color:'#166534', marginBottom:16 }}>
           <TrendingUp size={15} style={{ flexShrink:0 }} />
           <div>
-            <strong>{topEmp.name}</strong> is the top performer this batch — {topPerformer.jobs_completed} complaint{topPerformer.jobs_completed!==1?'s':''}, {topPerformer.rating}/5 rating ({formatMonthSA(topPerformer.month)}).
+            <strong>{topEmp.name}</strong> is the top performer this batch — {topPerformer.jobs_completed} jobs done, {topPerformer.rating}/5 rating ({formatMonthSA(topPerformer.month)}).
           </div>
         </div>
       )}
@@ -141,17 +141,17 @@ export default function Performance({ goToObservation }) {
                 <div className="perf-stats">
                   <div className="perf-stat">
                     <div className="perf-stat-label">Month</div>
-                    <div className="perf-stat-value" style={{ fontSize:13, color: hasEntry ? 'inherit' : '#9ca3af' }}>{hasEntry ? formatMonthOnlySA(entry.month) : '—'}</div>
+                    <div className="perf-stat-value" style={{ fontSize:13, color: hasEntry ? 'inherit' : '#9ca3af' }}>{hasEntry ? formatMonthSA(entry.month) : '—'}</div>
                   </div>
                   <div className="perf-stat">
-                    <div className="perf-stat-label">Complaints</div>
-                    <div className="perf-stat-value" style={{ color: hasEntry ? (entry.jobs_completed > 0 ? '#dc2626' : '#16a34a') : '#9ca3af' }}>
+                    <div className="perf-stat-label">Jobs Done</div>
+                    <div className="perf-stat-value" style={{ color: hasEntry ? '#1B3A2D' : '#9ca3af' }}>
                       {hasEntry ? entry.jobs_completed : '—'}
                     </div>
                   </div>
                   <div className="perf-stat">
-                    <div className="perf-stat-label">Observations</div>
-                    <div className="perf-stat-value" style={{ color: hasEntry ? (entry.complaints > 0 ? '#374151' : '#9ca3af') : '#9ca3af' }}>
+                    <div className="perf-stat-label">Complaints</div>
+                    <div className="perf-stat-value" style={{ color: hasEntry ? (entry.complaints > 0 ? '#dc2626' : '#16a34a') : '#9ca3af' }}>
                       {hasEntry ? entry.complaints : '—'}
                     </div>
                   </div>
@@ -190,8 +190,8 @@ export default function Performance({ goToObservation }) {
             <div className="form-grid">
               <label>Employee<select value={form.employeeId} onChange={e => setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select…</option>{employees.map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Month<input type="month" value={form.month} onChange={e => setForm(f=>({...f,month:e.target.value}))} /></label>
-              <label>Complaints<input type="number" value={form.jobsCompleted} onChange={e => setForm(f=>({...f,jobsCompleted:e.target.value}))} /></label>
-              <label>Observations<input type="number" min="0" value={form.complaints} onChange={e => setForm(f=>({...f,complaints:e.target.value}))} /></label>
+              <label>Jobs Done<input type="number" value={form.jobsCompleted} onChange={e => setForm(f=>({...f,jobsCompleted:e.target.value}))} /></label>
+              <label>Complaints<input type="number" min="0" value={form.complaints} onChange={e => setForm(f=>({...f,complaints:e.target.value}))} /></label>
               <label>Rating (1–5)<input type="number" min="1" max="5" value={form.rating} onChange={e => setForm(f=>({...f,rating:e.target.value}))} /></label>
             </div>
             <div className="modal-footer">

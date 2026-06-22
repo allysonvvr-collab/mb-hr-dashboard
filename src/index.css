@@ -416,8 +416,8 @@ body {
 /* Performance tab — grid-based row so columns align perfectly across every row,
    whether or not that row has data. */
 .perf-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
   align-items: center;
   gap: 16px;
 }
@@ -425,15 +425,16 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 160px;
-  flex-shrink: 0;
+  overflow: hidden;
 }
+.perf-identity > div { overflow: hidden; }
+.perf-identity > div > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .perf-stats {
   display: grid;
-  grid-template-columns: 60px 90px 100px;
+  grid-template-columns: 80px 90px 100px;
   align-items: center;
   gap: 14px;
-  flex-shrink: 0;
+  justify-content: end;
 }
 .perf-stat { text-align: center; }
 .perf-stat-label {
@@ -467,13 +468,16 @@ body {
 
 @media (max-width: 639px) {
   .perf-row {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
+  .perf-identity > div > div { white-space: normal; }
   .perf-stats {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
+    justify-content: stretch;
     gap: 8px;
     width: 100%;
   }
