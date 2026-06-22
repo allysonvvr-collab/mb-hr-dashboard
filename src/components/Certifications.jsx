@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Award } from 'lucide-react';
 import { formatDateSA } from '../lib/timezone';
+import { statusColor, statusBadgeStyle } from '../lib/statusColors';
+import EmptyState from './EmptyState';
 import { TabHeader } from './TabHeader';
 
 const CERT_NAMES = ['OSHA 10','OSHA 30','Pesticide Applicator License','QuickBooks Certified','First Aid/CPR',"Driver's License",'CDL'];
 const STATUSES = ['Active','Expired','In Progress','Pending Renewal'];
-const STATUS_COLORS = { Active:'#16a34a', Expired:'#dc2626', 'In Progress':'#3b82f6', 'Pending Renewal':'#f59e0b' };
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
 const empty = { employeeId:'', name:'OSHA 10', earned:'', expires:'', status:'Active' };
 
@@ -36,7 +37,6 @@ export default function Certifications() {
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
         {(data.certifications||[]).map(c => {
           const emp = getEmployee(c.employee_id);
-          const sc = STATUS_COLORS[c.status]||'#6b7280';
           return (
             <div key={c.id} className="list-card">
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
@@ -44,7 +44,7 @@ export default function Certifications() {
                   <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:3 }}>
                     <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={32} />
                     <strong style={{ fontSize:14 }}>{emp?.name||'—'}</strong>
-                    <span style={{ background:sc+'18', color:sc, border:`1px solid ${sc}40`, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{c.status}</span>
+                    <span style={statusBadgeStyle(c.status)}>{c.status}</span>
                   </div>
                   <div style={{ fontSize:13, fontWeight:600, color:'#374151', marginBottom:2 }}>{c.name}</div>
                   <div style={{ fontSize:12, color:'#6b7280' }}>
@@ -62,7 +62,7 @@ export default function Certifications() {
             </div>
           );
         })}
-        {(data.certifications||[]).length===0 && <div className="empty-state">No certifications on file.</div>}
+        {(data.certifications||[]).length===0 && <EmptyState icon={Award} message="No certifications on file." />}
       </div>
 
       <h3 style={{ marginTop:24, marginBottom:10, fontSize:12, fontWeight:700, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.05em' }}>Coverage by Employee</h3>
@@ -75,8 +75,8 @@ export default function Certifications() {
               <div style={{ color:'#6b7280', fontSize:11, marginBottom:6 }}>{emp.role}</div>
               {certs.length===0 ? <div style={{ fontSize:11, color:'#9ca3af', fontStyle:'italic' }}>None on file</div>
                 : certs.map(c=><div key={c.id} style={{ fontSize:12, display:'flex', alignItems:'center', gap:4, marginBottom:2 }}>
-                    <span style={{ width:6, height:6, borderRadius:'50%', background:STATUS_COLORS[c.status]||'#6b7280', flexShrink:0 }} />
-                    <span style={{ color:STATUS_COLORS[c.status]||'#6b7280' }}>{c.name}</span>
+                    <span style={{ width:6, height:6, borderRadius:'50%', background:statusColor(c.status), flexShrink:0 }} />
+                    <span style={{ color:statusColor(c.status) }}>{c.name}</span>
                   </div>)
               }
             </div>

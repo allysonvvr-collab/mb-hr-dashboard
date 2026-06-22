@@ -1,5 +1,7 @@
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
+import EmptyState from './EmptyState';
+import { Cake, Award } from 'lucide-react';
 import {
   daysUntilBirthday, formatBirthdayShort,
   daysUntilAnniversary, formatAnniversaryShort, anniversaryYears
@@ -111,7 +113,7 @@ export default function Celebrations() {
             All Birthdays
           </h3>
           <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
-            {allBirthdays.length === 0 && <div className="empty-state">No birthdays on file. Add them in the Team tab.</div>}
+            {allBirthdays.length === 0 && <EmptyState icon={Cake} message="No birthdays on file. Add them in the Team tab." />}
             {allBirthdays.map((e, i) => (
               <EventRow key={`bday-${e.id}-${i}`} name={e.name} role={e.role} type="Birthday" monthDay={e.monthDay} days={e.days} photoUrl={e.photo_url} />
             ))}
@@ -123,7 +125,7 @@ export default function Celebrations() {
             Work Anniversaries
           </h3>
           <div style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:10, overflow:'hidden', boxShadow:'0 1px 3px rgba(0,0,0,0.06)' }}>
-            {allAnniversaries.length === 0 && <div className="empty-state">No anniversaries on file. Add start dates in the Team tab.</div>}
+            {allAnniversaries.length === 0 && <EmptyState icon={Award} message="No anniversaries on file. Add start dates in the Team tab." />}
             {allAnniversaries.map((e, i) => (
               <EventRow key={`ann-${e.id}-${i}`} name={e.name} role={e.role} type="Anniversary" monthDay={e.monthDay} days={e.days} extra={`${e.years} yr${e.years !== 1 ? 's' : ''}`} photoUrl={e.photo_url} />
             ))}

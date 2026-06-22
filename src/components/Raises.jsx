@@ -4,6 +4,7 @@ import Avatar from './Avatar';
 import { Plus, Trash2, X, Check, TrendingUp } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
+import EmptyState from './EmptyState';
 
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
 const empty = { employeeId:'', date:todaySA(), previous:'', newRate:'', increase:'', reason:'' };
@@ -67,7 +68,7 @@ export default function Raises() {
             </div>
           );
         })}
-        {(data.raises||[]).length===0 && <div className="empty-state">No raises recorded yet.</div>}
+        {(data.raises||[]).length===0 && <EmptyState icon={TrendingUp} message="No raises recorded yet." />}
       </div>
 
       {modal && (

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { Plus, Edit2, Trash2, X, Check, AlertTriangle, DollarSign, User } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, AlertTriangle, DollarSign, User, ShieldCheck } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
+import EmptyState from './EmptyState';
 
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
 const empty = { employeeId:'', date:todaySA(), description:'', cost:'', status:'Open', docSigned:false };
@@ -95,6 +96,10 @@ export default function Incidents() {
 
   const selectedEmpObj = selectedEmp ? (data.employees||[]).find(e => e.id === selectedEmp) : null;
 
+  // Highlight employees with a clean record — only meaningful once there's at least one damage case to contrast against
+  const cleanRecordEmps = (data.employees||[]).filter(e => !allIncidents.find(i=>i.employee_id===e.id));
+  const showCleanBanner = allIncidents.length > 0 && cleanRecordEmps.length > 0;
+
   return (
     <div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
@@ -111,6 +116,15 @@ export default function Incidents() {
           <div style={{ fontSize:22, fontWeight:800, fontFamily:'Manrope,sans-serif', color:'#dc2626', lineHeight:1 }}>${total.toLocaleString()}</div>
         </div>
       </div>
+
+      {showCleanBanner && (
+        <div className="alert-banner" style={{ background:'#f0fdf4', borderColor:'#86efac', color:'#166534', marginBottom:16 }}>
+          <Check size={15} style={{ flexShrink:0 }} />
+          <div>
+            <strong>{cleanRecordEmps.length} clean record{cleanRecordEmps.length!==1?'s':''}</strong> — {cleanRecordEmps.map(e=>e.name.split(' ')[0]).join(', ')} {cleanRecordEmps.length===1?'has':'have'} zero damage cases on file.
+          </div>
+        </div>
+      )}
 
       <TabHeader title="Damages" settings={
         <div style={{ fontSize:13, color:'#6b7280' }}>
@@ -133,7 +147,7 @@ export default function Incidents() {
 
       {view === 'summary' && !selectedEmp && (
         <div>
-          {byEmployee.length === 0 && <div className="empty-state">No damage cases on record yet.</div>}
+          {byEmployee.length === 0 && <EmptyState icon={ShieldCheck} message="No damage cases on record yet." />}
           <div className="card-grid">
             {byEmployee.map(({ emp, incidents }) => (
               <EmployeeSummaryCard key={emp.id} emp={emp} incidents={incidents}
@@ -206,7 +220,7 @@ export default function Incidents() {
                 </div>
               );
             })}
-            {displayedIncidents.length===0 && <div className="empty-state">No damages on record.</div>}
+            {displayedIncidents.length===0 && <EmptyState icon={ShieldCheck} message="No damages on record." />}
           </div>
         </div>
       )}

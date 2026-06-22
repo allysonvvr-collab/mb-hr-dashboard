@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
 import { todaySA, formatDateSA } from '../lib/timezone';
-import { Plus, Edit2, Trash2, X, Check } from 'lucide-react';
+import { ratingColor } from '../lib/statusColors';
+import { Plus, Edit2, Trash2, X, Check, Star } from 'lucide-react';
 import { TabHeader } from './TabHeader';
+import EmptyState from './EmptyState';
 
 const CATS=['punctuality','quality','attitude','teamwork'];
 const empty={ employeeId:'', date:todaySA(), rating:4, punctuality:4, quality:4, attitude:4, teamwork:4, notes:'' };
@@ -36,10 +38,29 @@ export default function Reviews() {
       closeModal();
     } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
   };
-  const oc = (r) => r>=4?'#16a34a':r>=3?'#f59e0b':'#dc2626';
+
+  // Highlight the top-rated review from the most recent month that has any reviews logged
+  const topThisMonth = useMemo(() => {
+    const reviews = data.reviews || [];
+    if (reviews.length === 0) return null;
+    const latestMonth = [...reviews].sort((a,b)=>b.review_date.localeCompare(a.review_date))[0].review_date.slice(0,7); // YYYY-MM
+    const thisMonthReviews = reviews.filter(r => r.review_date.startsWith(latestMonth));
+    if (thisMonthReviews.length < 2) return null; // not meaningful with only one review to compare
+    return [...thisMonthReviews].sort((a,b)=>b.rating-a.rating)[0];
+  }, [data.reviews]);
+  const topEmp = topThisMonth ? getEmployee(topThisMonth.employee_id) : null;
 
   return (
     <div>
+      {topEmp && (
+        <div className="alert-banner" style={{ background:'#f0fdf4', borderColor:'#86efac', color:'#166534', marginBottom:16 }}>
+          <Star size={15} style={{ flexShrink:0 }} />
+          <div>
+            <strong>{topEmp.name}</strong> earned the highest rating this month — {topThisMonth.rating}/5 overall.
+          </div>
+        </div>
+      )}
+
       <TabHeader title="Employee Reviews" settings={<p style={{color:'#6b7280',fontSize:13}}>Periodic reviews rating punctuality, quality, attitude, and teamwork — tied to raise decisions and performance records.</p>}>
         {isAdmin && <button className="btn-primary" onClick={() => { setForm(empty); setModal('add'); }}><Plus size={16} /> Add Review</button>}
       </TabHeader>
@@ -55,10 +76,10 @@ export default function Reviews() {
                     <strong>{emp?.name||'—'}</strong>
                     <span style={{ color:'#6b7280', fontSize:13 }}>{emp?.role}</span>
                     <span style={{ color:'#6b7280', fontSize:13 }}>{formatDateSA(rev.review_date)}</span>
-                    <span style={{ background:oc(rev.rating)+'20', color:oc(rev.rating), padding:'2px 10px', borderRadius:20, fontWeight:700, fontSize:13 }}>{rev.rating}/5 Overall</span>
+                    <span style={{ background:ratingColor(rev.rating)+'20', color:ratingColor(rev.rating), padding:'2px 10px', borderRadius:20, fontWeight:700, fontSize:13 }}>{rev.rating}/5 Overall</span>
                   </div>
                   <div style={{ display:'flex', gap:16, flexWrap:'wrap', marginBottom:8 }}>
-                    {CATS.map(c=><span key={c} style={{ fontSize:13 }}><span style={{ color:'#6b7280', textTransform:'capitalize' }}>{c}: </span><strong style={{ color:oc(rev[c]) }}>{rev[c]}/5</strong></span>)}
+                    {CATS.map(c=><span key={c} style={{ fontSize:13 }}><span style={{ color:'#6b7280', textTransform:'capitalize' }}>{c}: </span><strong style={{ color:ratingColor(rev[c]) }}>{rev[c]}/5</strong></span>)}
                   </div>
                   {rev.notes && <div style={{ fontSize:13, color:'#374151', fontStyle:'italic' }}>{rev.notes}</div>}
                 </div>
@@ -67,7 +88,7 @@ export default function Reviews() {
             </div>
           );
         })}
-        {(data.reviews||[]).length===0 && <div className="empty-state">No reviews yet.</div>}
+        {(data.reviews||[]).length===0 && <EmptyState icon={Star} message="No reviews yet." />}
       </div>
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>

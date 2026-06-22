@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { Plus, Trash2, X, Check, ArrowLeft, ClipboardList } from 'lucide-react';
+import { Plus, Trash2, X, Check, ArrowLeft, ClipboardList, UserX } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
+import EmptyState from './EmptyState';
 
 // Roles excluded from observation tracking — leadership only, not field/office staff
 const EXCLUDED_ROLES = ['Owner', 'Operations Manager'];
@@ -98,7 +99,7 @@ export default function Observations({ observationTarget, clearObservationTarget
               </div>
             </div>
           ))}
-          {selectedObs.length === 0 && <div className="empty-state">No observations logged yet for {selected.name.split(' ')[0]}.</div>}
+          {selectedObs.length === 0 && <EmptyState icon={ClipboardList} message={`No observations logged yet for ${selected.name.split(' ')[0]}.`} />}
         </div>
 
         {modal && (
@@ -149,7 +150,7 @@ export default function Observations({ observationTarget, clearObservationTarget
             </div>
           );
         })}
-        {eligible.length === 0 && <div className="empty-state">No eligible employees on file. Add Crew Leaders, Crew Workers, CSRs, VAs, or Office Managers in the Team tab.</div>}
+        {eligible.length === 0 && <EmptyState icon={UserX} message="No eligible employees on file. Add Crew Leaders, Crew Workers, CSRs, VAs, or Office Managers in the Team tab." />}
       </div>
     </div>
   );

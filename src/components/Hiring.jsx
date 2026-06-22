@@ -1,17 +1,15 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Edit2, Trash2, X, Check, Star, Ban } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Star, Ban, SearchX } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
+import { statusColor, statusBadgeStyle } from '../lib/statusColors';
+import EmptyState from './EmptyState';
 import Avatar from './Avatar';
 
 const STATUSES = ['Applied','Phone Screen','Interview','Offer','Hired','Rejected'];
 const ROLES    = ['Crew Leader','Crew Worker','Doorhanger Distributor','CSR','VA'];
 const SOURCES  = ['Indeed','Referral','Craigslist','Web Form','Walk-in','Other'];
 
-const STATUS_COLORS = {
-  Applied:'#6b7280','Phone Screen':'#f59e0b',Interview:'#3b82f6',
-  Offer:'#8b5cf6',Hired:'#16a34a',Rejected:'#dc2626'
-};
 const SOURCE_COLORS = {
   Indeed:'#2563eb',Referral:'#16a34a',Craigslist:'#7c3aed',
   'Web Form':'#0891b2','Walk-in':'#b45309',Other:'#6b7280'
@@ -113,7 +111,7 @@ export default function Hiring() {
             <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
               {['All',...STATUSES].map(s => {
                 const active = filterStatus===s;
-                const color  = STATUS_COLORS[s]||'#374151';
+                const color  = s==='All' ? '#374151' : statusColor(s);
                 const count  = s==='All'?allApps.length:statusCounts[s]||0;
                 if (s!=='All' && count===0) return null;
                 return (
@@ -146,7 +144,6 @@ export default function Hiring() {
           {/* Applicant cards */}
           <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
             {filtered.map(app => {
-              const sc = STATUS_COLORS[app.status]||'#6b7280';
               const srcColor = SOURCE_COLORS[app.source]||'#6b7280';
               return (
                 <div key={app.id} className="list-card">
@@ -157,7 +154,7 @@ export default function Hiring() {
                         <div style={{ minWidth:0 }}>
                           <div style={{ fontWeight:700, fontSize:14, marginBottom:3 }}>{app.name}</div>
                           <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
-                            <span style={{ background:sc+'18', color:sc, border:`1px solid ${sc}40`, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{app.status}</span>
+                            <span style={statusBadgeStyle(app.status)}>{app.status}</span>
                             <span style={{ background:'#f3f4f6', color:'#374151', fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:20 }}>{app.role}</span>
                             {app.source && <span style={{ background:srcColor+'15', color:srcColor, border:`1px solid ${srcColor}30`, fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:20 }}>{app.source}</span>}
                           </div>
@@ -179,7 +176,7 @@ export default function Hiring() {
                 </div>
               );
             })}
-            {filtered.length===0 && <div className="empty-state">No applicants match this filter.</div>}
+            {filtered.length===0 && <EmptyState icon={SearchX} message="No applicants match this filter." />}
           </div>
         </>
       )}
@@ -224,7 +221,7 @@ export default function Hiring() {
                 </div>
               </div>
             ))}
-            {blacklist.length===0 && <div className="empty-state">No one on the blacklist.</div>}
+            {blacklist.length===0 && <EmptyState icon={Ban} message="No one on the blacklist." />}
           </div>
         </>
       )}

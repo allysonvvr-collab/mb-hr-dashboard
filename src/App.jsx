@@ -132,10 +132,13 @@ function Dashboard() {
 
         <div className="header-actions">
           {/* Desktop only */}
-          <div className="desktop-only" style={{ display:'flex', alignItems:'center', gap:6, color:'rgba(255,255,255,0.6)', fontSize:12 }}>
-            <RoleIcon size={12} color={roleColor} />
-            <span>{profile?.full_name || profile?.email?.split('@')[0] || 'User'}</span>
+          <div className="header-user desktop-only">
+            <span className="header-user-avatar" style={{ background:roleColor }}>
+              <RoleIcon size={11} color="#fff" />
+            </span>
+            <span className="header-user-name">{profile?.full_name || profile?.email?.split('@')[0] || 'User'}</span>
           </div>
+          <div className="header-divider desktop-only" />
           {isSuperAdmin && (
             <button className="btn-header desktop-only" onClick={() => { setShowUsers(s=>!s); setDrawerOpen(false); }} title="Users">
               <Settings size={14} /><span className="btn-label"> Users</span>

@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { Plus, Edit2, Trash2, X, Check, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, AlertTriangle, Shirt } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
+import { statusBadgeStyle } from '../lib/statusColors';
 import { TabHeader } from './TabHeader';
+import EmptyState from './EmptyState';
 
 const ITEMS=['Polo Shirt','Hat','Jacket','Pants','Safety Vest','Boots','Gloves'];
 const SIZES=['XS','S','M','L','XL','2XL','3XL','One Size'];
 const STATUSES=['Good','Needs Replacement','Lost','Returned'];
-const STATUS_COLORS={ Good:'#16a34a','Needs Replacement':'#f59e0b',Lost:'#dc2626',Returned:'#6b7280' };
 const LOW_STOCK_THRESHOLD = 5;
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
 const empty = { employeeId:'', item:'Polo Shirt', size:'M', qty:1, issued:todaySA(), status:'Good' };
@@ -32,7 +33,6 @@ export default function Uniforms() {
       closeModal();
     } catch (e) { setIssueError(e.message || 'Save failed. Please try again.'); }
   };
-  const sc = (s) => STATUS_COLORS[s]||'#6b7280';
 
   const stock = data.uniformStock || [];
   const [stockError, setStockError] = useState('');
@@ -104,7 +104,7 @@ export default function Uniforms() {
                 </div>
               );
             })}
-            {stock.length===0 && <div className="empty-state">No stock counts on file yet. Tap "Add Stock" to log what's in the warehouse.</div>}
+            {stock.length===0 && <EmptyState icon={Shirt} message={`No stock counts on file yet. Tap "Add Stock" to log what's in the warehouse.`} />}
           </div>
           {lowStockCount > 0 && (
             <div className="alert-banner" style={{ background:'#fef2f2', borderColor:'#fecaca', color:'#dc2626', marginTop:14 }}>
@@ -126,7 +126,7 @@ export default function Uniforms() {
                     <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap', marginBottom:3 }}>
                       <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={32} />
                       <strong style={{ fontSize:14 }}>{emp?.name||'—'}</strong>
-                      <span style={{ background:sc(u.status)+'18', color:sc(u.status), fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{u.status}</span>
+                      <span style={statusBadgeStyle(u.status)}>{u.status}</span>
                     </div>
                     <div style={{ fontSize:13, color:'#374151' }}>{u.item} · Size {u.size} · Qty {u.qty}</div>
                     <div style={{ fontSize:12, color:'#6b7280', marginTop:2 }}>Issued: {formatDateSA(u.issued_date)}</div>
@@ -141,7 +141,7 @@ export default function Uniforms() {
               </div>
             );
           })}
-          {(data.uniforms||[]).length===0 && <div className="empty-state">No uniform records.</div>}
+          {(data.uniforms||[]).length===0 && <EmptyState icon={Shirt} message="No uniform records." />}
         </div>
       )}
 

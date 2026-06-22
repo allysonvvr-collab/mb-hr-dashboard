@@ -3,10 +3,11 @@ import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
 import { Plus, Trash2, X, Check, Clock } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
+import { statusColor, statusBadgeStyle } from '../lib/statusColors';
 import { TabHeader } from './TabHeader';
+import EmptyState from './EmptyState';
 
 const TYPES = ['Vacation','Sick','Personal','Other'];
-const STATUS_COLORS = { Approved:'#16a34a', Pending:'#f59e0b', Denied:'#dc2626' };
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', boxSizing:'border-box' };
 const empty = { employeeId:'', type:'Vacation', startDate:todaySA(), endDate:todaySA(), halfDay:false, status:'Pending', notes:'' };
 
@@ -69,7 +70,7 @@ export default function TimeOff() {
     setModal(false);
   };
 
-  const setStatus = (t, status) => updateTimeOff({ ...t, employeeId:t.employee_id, status });
+  const setStatus = (t, status) => updateTimeOff({ ...t, employeeId:t.employee_id, startDate:t.start_date, endDate:t.end_date, halfDay:t.half_day, status });
 
   return (
     <div>
@@ -88,7 +89,6 @@ export default function TimeOff() {
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
         {(data.timeOff||[]).map(t => {
           const emp = getEmployee(t.employee_id);
-          const sc = STATUS_COLORS[t.status]||'#6b7280';
           const single = t.start_date && t.start_date === t.end_date;
           return (
             <div key={t.id} className="list-card">
@@ -96,7 +96,7 @@ export default function TimeOff() {
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:4 }}>
                     <strong style={{ fontSize:14 }}>{emp?.name||'—'}</strong>
-                    <span style={{ background:sc+'18', color:sc, border:`1px solid ${sc}40`, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{t.status}</span>
+                    <span style={statusBadgeStyle(t.status)}>{t.status}</span>
                     {t.half_day && (
                       <span style={{ background:'#e0f2fe', color:'#0369a1', border:'1px solid #bae6fd', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
                         {single ? 'Half Day' : '+ Half Day'}
@@ -121,7 +121,7 @@ export default function TimeOff() {
             </div>
           );
         })}
-        {(data.timeOff||[]).length===0 && <div className="empty-state">No time off requests.</div>}
+        {(data.timeOff||[]).length===0 && <EmptyState icon={Clock} message="No time off requests." />}
       </div>
 
       {modal && (

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Plus, Edit2, Trash2, X, Check, Camera, Search } from 'lucide-react';
 import { isBirthdayUpcoming, daysUntilBirthday, formatDateSA, formatBirthdaySA } from '../lib/timezone';
+import EmptyState from './EmptyState';
 
 const ROLES = ['Owner', 'Operations Manager', 'Office Manager', 'Crew Leader', 'Crew Worker', 'CSR', 'VA'];
 
@@ -168,7 +169,7 @@ export default function Team() {
             </div>
           );
         })}
-        {filtered.length===0 && <div className="empty-state" style={{ gridColumn:'1/-1' }}>No employees found.</div>}
+        {filtered.length===0 && <EmptyState icon={Search} message="No employees found." style={{ gridColumn:'1/-1' }} />}
       </div>
 
       {/* Add/Edit Modal */}
