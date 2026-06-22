@@ -69,6 +69,7 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState(getTabFromPath);
   const [showUsers, setShowUsers] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [observationTarget, setObservationTarget] = useState(null);
   const { data, profile, isSuperAdmin, exportData, signOut } = useApp();
 
   const Component = showUsers ? UserManagement : COMPONENTS[activeTab];
@@ -89,6 +90,12 @@ function Dashboard() {
     if (window.location.pathname !== newPath) {
       window.history.pushState({ tab: id }, '', newPath);
     }
+  };
+
+  // Jump straight to a specific employee's profile in the Observation Log, from any other tab
+  const goToObservation = (employeeId) => {
+    setObservationTarget(employeeId);
+    goTo('observations');
   };
 
   // Support browser Back/Forward buttons
@@ -165,9 +172,6 @@ function Dashboard() {
               );
             })}
           </div>
-          <button className="tab-more-btn" onClick={() => setDrawerOpen(o=>!o)} title="More tabs">
-            <Menu size={15} /> More
-          </button>
         </nav>
       )}
 
@@ -259,7 +263,7 @@ function Dashboard() {
       )}
 
       <main className="main-content">
-        <Component />
+        <Component goToObservation={goToObservation} observationTarget={observationTarget} clearObservationTarget={()=>setObservationTarget(null)} />
       </main>
     </div>
   );

@@ -146,23 +146,6 @@ body {
 }
 .tab-nav::-webkit-scrollbar { display: none; }
 
-.tab-more-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  background: rgba(255,255,255,0.06);
-  border: none;
-  border-left: 1px solid rgba(255,255,255,0.12);
-  color: rgba(255,255,255,0.85);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 0 16px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.tab-more-btn:hover { background: rgba(255,255,255,0.12); }
-
 .tab-btn {
   display: flex;
   align-items: center;

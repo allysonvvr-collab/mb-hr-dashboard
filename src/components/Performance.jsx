@@ -4,7 +4,7 @@ import Avatar from './Avatar';
 import { Plus, Trash2, X, Check } from 'lucide-react';
 import { TabHeader } from './TabHeader';
 const empty = { employeeId:'', month:'', jobsCompleted:'', complaints:0, rating:4 };
-export default function Performance() {
+export default function Performance({ goToObservation }) {
   const { data, getEmployee, addPerformance, deletePerformance, isAdmin } = useApp();
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(empty);
@@ -30,9 +30,16 @@ export default function Performance() {
               return (
                 <tr key={p.id}>
                   <td>
-                    <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <div
+                      onClick={() => goToObservation && goToObservation(emp?.id)}
+                      style={{ display:'flex', alignItems:'center', gap:8, cursor: goToObservation ? 'pointer' : 'default' }}
+                      title="View observation log"
+                    >
                       <Avatar name={emp?.name||'?'} photoUrl={emp?.photo_url} size={30} />
-                      <div><div style={{ fontWeight:600 }}>{emp?.name||'—'}</div><div style={{ fontSize:11, color:'#6b7280' }}>{emp?.role}</div></div>
+                      <div>
+                        <div style={{ fontWeight:600, color: goToObservation ? '#1B3A2D' : 'inherit' }}>{emp?.name||'—'}</div>
+                        <div style={{ fontSize:11, color:'#6b7280' }}>{emp?.role}</div>
+                      </div>
                     </div>
                   </td>
                   <td>{p.month}</td>

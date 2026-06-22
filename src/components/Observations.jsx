@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
 import { Plus, Trash2, X, Check, ArrowLeft, ClipboardList } from 'lucide-react';
@@ -29,11 +29,19 @@ function countBadge(count) {
   );
 }
 
-export default function Observations() {
+export default function Observations({ observationTarget, clearObservationTarget }) {
   const { data, addObservation, deleteObservation, isAdmin } = useApp();
   const [selectedId, setSelectedId] = useState(null);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ date: todaySA(), notes: '' });
+
+  // If another tab asked to deep-link here for a specific employee, open their profile immediately
+  useEffect(() => {
+    if (observationTarget) {
+      setSelectedId(observationTarget);
+      clearObservationTarget && clearObservationTarget();
+    }
+  }, [observationTarget]);
 
   const eligible = (data.employees || [])
     .filter(e => !EXCLUDED_ROLES.includes(e.role))
