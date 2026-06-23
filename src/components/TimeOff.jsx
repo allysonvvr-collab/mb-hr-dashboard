@@ -95,21 +95,27 @@ function RequestRow({ t, isAdmin, onEdit, onDelete, onSetStatus }) {
   );
 }
 
-function RequestsPopup({ title, requests, isAdmin, onClose, onEdit, onDelete, onSetStatus }) {
+function RequestsPopup({ title, requests, isAdmin, onClose, onAdd, onEdit, onDelete, onSetStatus }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-header"><h3>{title}</h3><button className="btn-icon" onClick={onClose}><X size={18} /></button></div>
+        <div className="modal-header">
+          <h3>{title}</h3>
+          <div style={{ display:'flex', gap:6 }}>
+            {isAdmin && onAdd && <button className="btn-primary" style={{ fontSize:12, padding:'6px 12px' }} onClick={onAdd}><Plus size={13} /> Add Request</button>}
+            <button className="btn-icon" onClick={onClose}><X size={18} /></button>
+          </div>
+        </div>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {requests.map(t => <RequestRow key={t.id} t={t} isAdmin={isAdmin} onEdit={onEdit} onDelete={onDelete} onSetStatus={onSetStatus} />)}
-          {requests.length === 0 && <EmptyState icon={Clock} message="Nothing here." />}
+          {requests.length === 0 && <EmptyState icon={Clock} message="Nothing logged for this day yet." />}
         </div>
       </div>
     </div>
   );
 }
 
-function MonthCalendar({ year, monthIndex, dateMap, onAdd, onDayClick }) {
+function MonthCalendar({ year, monthIndex, dateMap, onDayClick }) {
   const monthName = new Date(year, monthIndex, 1).toLocaleDateString('en-US', { month:'long' });
   const firstWeekday = new Date(year, monthIndex, 1).getDay();
   const numDays = new Date(year, monthIndex + 1, 0).getDate();
@@ -122,9 +128,6 @@ function MonthCalendar({ year, monthIndex, dateMap, onAdd, onDayClick }) {
     <div className="month-cal">
       <div className="month-cal-header">
         <span>{monthName}</span>
-        <button className="month-cal-add" onClick={() => onAdd(monthIndex)} title={`Add request in ${monthName}`}>
-          <Plus size={13} />
-        </button>
       </div>
       <div className="month-cal-weekdays">{WEEKDAYS.map((w, i) => <span key={i}>{w}</span>)}</div>
       <div className="month-cal-days">
@@ -133,10 +136,9 @@ function MonthCalendar({ year, monthIndex, dateMap, onAdd, onDayClick }) {
           const key = dateKey(year, monthIndex, d);
           const entries = dateMap[key];
           const pending = entries && entries.some(t => t.status === 'Pending');
-          const tone = entries ? (pending ? ' has-entries pending' : ' has-entries') : '';
+          const tone = entries ? ` has-entries ${pending ? 'tone-pending' : 'tone-approved'}` : '';
           return (
-            <button key={i} type="button" className={`cal-day${tone}`}
-              onClick={() => entries && onDayClick(key)} disabled={!entries}>
+            <button key={i} type="button" className={`cal-day${tone}`} onClick={() => onDayClick(key)}>
               {d}
             </button>
           );
@@ -175,13 +177,8 @@ export default function TimeOff() {
   };
   const handleEndDate = (val) => setForm(f => ({ ...f, endDate: val }));
 
-  const openAdd = (monthIndex) => {
-    if (monthIndex !== undefined) {
-      const first = dateKey(year, monthIndex, 1);
-      setForm({ ...empty, startDate:first, endDate:first });
-    } else {
-      setForm(empty);
-    }
+  const openAdd = (dateStr) => {
+    setForm(dateStr ? { ...empty, startDate:dateStr, endDate:dateStr } : empty);
     setSaveError('');
     setModal('add');
   };
@@ -212,7 +209,7 @@ export default function TimeOff() {
   const openDay = (key) => {
     const requests = dateMap[key] || [];
     const d = new Date(key + 'T00:00:00');
-    setPopup({ title: d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }), requests });
+    setPopup({ title: d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' }), requests, dateKey:key });
   };
   const openPending = () => setPopup({ title:'Pending Approval', requests:pending });
 
@@ -226,7 +223,7 @@ export default function TimeOff() {
         </div>
       )}
 
-      <TabHeader title="Time Off" settings={<p style={{ fontSize:13, color:'#6b7280' }}>Tap a highlighted date to see who's off and why. Use the + next to any month to log a new request.</p>}>
+      <TabHeader title="Time Off" settings={<p style={{ fontSize:13, color:'#6b7280' }}>Tap any date to see who's off, log a new request, or both.</p>}>
         <div style={{ display:'flex', alignItems:'center', gap:4 }}>
           <button className="btn-icon" onClick={() => setYear(y => y - 1)} title="Previous year"><ChevronLeft size={15} /></button>
           <span style={{ fontSize:14, fontWeight:700, minWidth:48, textAlign:'center' }}>{year}</span>
@@ -248,7 +245,7 @@ export default function TimeOff() {
 
       <div className="timeoff-cal-grid">
         {Array.from({ length:12 }, (_, m) => (
-          <MonthCalendar key={m} year={year} monthIndex={m} dateMap={dateMap} onAdd={openAdd} onDayClick={openDay} />
+          <MonthCalendar key={m} year={year} monthIndex={m} dateMap={dateMap} onDayClick={openDay} />
         ))}
       </div>
 
@@ -258,6 +255,7 @@ export default function TimeOff() {
           requests={popup.requests}
           isAdmin={isAdmin}
           onClose={() => setPopup(null)}
+          onAdd={popup.dateKey ? () => { setPopup(null); openAdd(popup.dateKey); } : null}
           onEdit={openEdit}
           onDelete={remove}
           onSetStatus={(t, status) => { setStatus(t, status); setPopup(p => p ? { ...p, requests:p.requests.map(r => r.id === t.id ? { ...r, status } : r) } : p); }}
