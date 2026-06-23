@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
-import { Plus, Edit2, Trash2, X, Check, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, ArrowLeft, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
 import { TabHeader } from './TabHeader';
 import EmptyState from './EmptyState';
@@ -254,19 +254,27 @@ export default function Incidents() {
             <p style={{ marginTop:8 }}>Tap an employee for their full history, or switch to <strong>All Damages</strong> for one chronological log.</p>
           </div>
         }
-      >
-        <div style={{ textAlign:'right', marginRight:6 }}>
-          <div style={{ fontSize:20, fontWeight:800, fontFamily:'Manrope,sans-serif', color: allIncidents.length > 0 ? '#dc2626' : '#9ca3af', lineHeight:1 }}>
-            {allIncidents.length}
-          </div>
-          <div style={{ fontSize:10, color:'#6b7280', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.04em' }}>Company Total</div>
-          {companyTotalCost > 0 && (
-            <div style={{ fontSize:11, color:'#dc2626', fontWeight:600, marginTop:2, whiteSpace:'nowrap' }}>
-              ${companyTotalCost.toLocaleString()}{companyOpen > 0 ? ` · ${companyOpen} open` : ''}
-            </div>
-          )}
-        </div>
+      />
 
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:14, background:'#fff', border:'1px solid #e5e7eb', borderRadius:12, padding:'14px 18px', marginBottom:14, boxShadow:'0 1px 3px rgba(0,0,0,0.06)', flexWrap:'wrap' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12, minWidth:0 }}>
+          <div style={{ width:40, height:40, borderRadius:10, background: allIncidents.length > 0 ? '#fef2f2' : '#f3f4f6', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+            <AlertTriangle size={19} color={allIncidents.length > 0 ? '#dc2626' : '#9ca3af'} />
+          </div>
+          <div style={{ minWidth:0 }}>
+            <div style={{ fontSize:12, color:'#6b7280', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.04em' }}>Company Total</div>
+            <div style={{ fontSize:13, color:'#374151', fontWeight:500 }}>
+              {companyTotalCost > 0 ? `$${companyTotalCost.toLocaleString()} total cost` : 'No cost on file'}
+              {companyOpen > 0 ? ` · ${companyOpen} open` : ''}
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize:28, fontWeight:800, fontFamily:'Manrope,sans-serif', color: allIncidents.length > 0 ? '#dc2626' : '#9ca3af', lineHeight:1, flexShrink:0 }}>
+          {allIncidents.length}
+        </div>
+      </div>
+
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:10, marginBottom:16, flexWrap:'wrap' }}>
         <div style={{ display:'flex', background:'#f3f4f6', borderRadius:8, padding:2, gap:2 }}>
           <button onClick={() => setViewAll(false)}
             style={{ padding:'6px 12px', borderRadius:6, border:'none', fontSize:12, fontWeight:600, cursor:'pointer', background: !viewAll ? '#fff' : 'none', color: !viewAll ? '#1B3A2D' : '#6b7280', boxShadow: !viewAll ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}>
@@ -279,7 +287,7 @@ export default function Incidents() {
         </div>
 
         {isAdmin && <button className="btn-primary" onClick={() => openAdd()}><Plus size={15} /> Log Damage</button>}
-      </TabHeader>
+      </div>
 
       {!viewAll && (
         <div className="card-grid">
