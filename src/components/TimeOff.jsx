@@ -150,6 +150,7 @@ export default function TimeOff() {
   const [modal, setModal]     = useState(false); // false | 'add' | timeoff record (edit)
   const [form, setForm]       = useState(empty);
   const [popup, setPopup]     = useState(null); // { title, requests } | null
+  const [saveError, setSaveError] = useState('');
 
   const allTimeOff = data.timeOff || [];
   const pending = allTimeOff.filter(t => t.status === 'Pending');
@@ -179,24 +180,28 @@ export default function TimeOff() {
     } else {
       setForm(empty);
     }
+    setSaveError('');
     setModal('add');
   };
   const openEdit = (t) => {
-    setForm({ id:t.id, employeeId:String(t.employee_id), type:t.type, startDate:t.start_date, endDate:t.end_date, halfDay:t.half_day, status:t.status, notes:t.notes || '' });
+    setForm({ id:t.id, employeeId:String(t.employee_id), type:t.type, startDate:t.start_date || todaySA(), endDate:t.end_date || t.start_date || todaySA(), halfDay:t.half_day, status:t.status, notes:t.notes || '', legacyHint: !t.start_date ? t.dates : null });
+    setSaveError('');
     setModal(t);
     setPopup(null); // editing replaces whatever popup it was opened from
   };
-  const closeModal = () => setModal(false);
+  const closeModal = () => { setModal(false); setSaveError(''); };
 
   const save = async () => {
-    const payload = {
-      ...form,
-      employeeId: parseInt(form.employeeId),
-      dates: formatRange(form.startDate, form.endDate),
-      days: calcDays(form.startDate, form.endDate, form.halfDay),
-    };
-    if (modal === 'add') await addTimeOff(payload); else await updateTimeOff(payload);
-    closeModal();
+    try {
+      const payload = {
+        ...form,
+        employeeId: parseInt(form.employeeId),
+        dates: formatRange(form.startDate, form.endDate),
+        days: calcDays(form.startDate, form.endDate, form.halfDay),
+      };
+      if (modal === 'add') await addTimeOff(payload); else await updateTimeOff(payload);
+      closeModal();
+    } catch (e) { setSaveError(e.message || 'Save failed. Please try again.'); }
   };
 
   const setStatus = (t, status) => updateTimeOff({ id:t.id, employeeId:t.employee_id, startDate:t.start_date, endDate:t.end_date, halfDay:t.half_day, type:t.type, dates:t.dates, days:t.days, notes:t.notes, status });
@@ -250,6 +255,12 @@ export default function TimeOff() {
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header"><h3>{modal === 'add' ? 'Add Time Off Request' : 'Edit Time Off Request'}</h3><button className="btn-icon" onClick={closeModal}><X size={18} /></button></div>
+            {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
+            {form.legacyHint && (
+              <div style={{ background:'#fffbeb', border:'1px solid #fde68a', color:'#92400e', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>
+                This request predates structured dates — it was originally entered as <strong>{form.legacyHint}</strong>. Set the real Start/End Date below and save once to fix it on the calendar.
+              </div>
+            )}
             <div className="form-grid">
               <label>Employee<select style={inp} value={form.employeeId} onChange={e => setForm(f => ({ ...f, employeeId:e.target.value }))}><option value="">Select...</option>{(data.employees || []).map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Type<select style={inp} value={form.type} onChange={e => setForm(f => ({ ...f, type:e.target.value }))}>{TYPES.map(t => <option key={t}>{t}</option>)}</select></label>
