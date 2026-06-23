@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import Avatar from './Avatar';
 import { Plus, Trash2, Edit2, X, Check, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { todaySA, formatDateSA } from '../lib/timezone';
-import { statusBadgeStyle } from '../lib/statusColors';
+import { statusColor, statusBadgeStyle } from '../lib/statusColors';
 import { TabHeader } from './TabHeader';
 import EmptyState from './EmptyState';
 
@@ -62,7 +62,7 @@ function RequestRow({ t, isAdmin, onEdit, onDelete, onSetStatus }) {
   const emp = getEmployee(t.employee_id);
   const single = t.start_date && t.start_date === t.end_date;
   return (
-    <div className="list-card">
+    <div className="list-card" style={{ borderLeft:`4px solid ${statusColor(t.status)}` }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:4 }}>
@@ -132,8 +132,10 @@ function MonthCalendar({ year, monthIndex, dateMap, onAdd, onDayClick }) {
           if (d === null) return <span key={i} />;
           const key = dateKey(year, monthIndex, d);
           const entries = dateMap[key];
+          const pending = entries && entries.some(t => t.status === 'Pending');
+          const tone = entries ? (pending ? ' has-entries pending' : ' has-entries') : '';
           return (
-            <button key={i} type="button" className={`cal-day${entries ? ' has-entries' : ''}`}
+            <button key={i} type="button" className={`cal-day${tone}`}
               onClick={() => entries && onDayClick(key)} disabled={!entries}>
               {d}
             </button>
@@ -232,6 +234,17 @@ export default function TimeOff() {
         </div>
         {isAdmin && <button className="btn-primary" onClick={() => openAdd()}><Plus size={15} /> Add Request</button>}
       </TabHeader>
+
+      <div style={{ display:'flex', gap:16, marginBottom:14, fontSize:12, color:'#6b7280', fontWeight:600 }}>
+        <span style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <span style={{ width:11, height:11, borderRadius:'50%', background:'rgba(93,184,138,0.55)' }} />
+          Approved
+        </span>
+        <span style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <span style={{ width:11, height:11, borderRadius:'50%', background:'rgba(245,158,11,0.5)' }} />
+          Pending review
+        </span>
+      </div>
 
       <div className="timeoff-cal-grid">
         {Array.from({ length:12 }, (_, m) => (

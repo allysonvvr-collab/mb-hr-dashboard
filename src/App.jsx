@@ -265,7 +265,7 @@ function Dashboard() {
         </nav>
       )}
 
-      <main className="main-content">
+      <main className={`main-content${activeTab === 'timeoff' && !showUsers ? ' wide' : ''}`}>
         <Component goToObservation={goToObservation} observationTarget={observationTarget} clearObservationTarget={()=>setObservationTarget(null)} />
       </main>
     </div>

@@ -215,6 +215,7 @@ body {
   width: 100%;
   padding: 20px 16px 80px;
 }
+.main-content.wide { max-width: 1440px; }
 
 /* ══════════════════════════════════════
    ALERT BANNER
@@ -346,6 +347,7 @@ body {
 }
 @media (min-width: 640px)  { .timeoff-cal-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1024px) { .timeoff-cal-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1280px) { .timeoff-cal-grid { grid-template-columns: repeat(4, 1fr); } }
 
 .month-cal {
   background: #fff;
@@ -406,6 +408,11 @@ body {
   font-weight: 800;
 }
 .cal-day.has-entries:hover { background: rgba(93, 184, 138, 0.45); }
+.cal-day.has-entries.pending {
+  background: rgba(245, 158, 11, 0.25);
+  color: #92400e;
+}
+.cal-day.has-entries.pending:hover { background: rgba(245, 158, 11, 0.4); }
 
 /* ══════════════════════════════════════
    EMPLOYEE CARDS — Mobile-first grid
