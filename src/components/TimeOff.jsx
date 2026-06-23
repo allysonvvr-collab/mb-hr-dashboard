@@ -63,34 +63,39 @@ function RequestRow({ t, isAdmin, onEdit, onDelete, onSetStatus }) {
   const single = t.start_date && t.start_date === t.end_date;
   return (
     <div className="list-card" style={{ borderLeft:`4px solid ${statusColor(t.status)}` }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:4 }}>
-            <Avatar name={emp?.name || '?'} photoUrl={emp?.photo_url} size={26} />
-            <strong style={{ fontSize:14 }}>{emp?.name || '—'}</strong>
-            <span style={statusBadgeStyle(t.status)}>{t.status}</span>
-            {t.half_day && (
-              <span style={{ background:'#e0f2fe', color:'#0369a1', border:'1px solid #bae6fd', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
-                {single ? 'Half Day' : '+ Half Day'}
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize:13, color:'#374151', marginBottom:2 }}>
-            {t.type} · {t.start_date ? formatRange(t.start_date, t.end_date) : t.dates} · {daysLabel(t.days, single)}
-          </div>
-          {t.notes && t.notes !== '—' && <div style={{ fontSize:12, color:'#6b7280' }}>{t.notes}</div>}
-        </div>
-        <div style={{ display:'flex', gap:6, flexShrink:0, flexWrap:'wrap', justifyContent:'flex-end' }}>
-          {isAdmin && t.status === 'Pending' && (
+      <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap', marginBottom:8 }}>
+        <Avatar name={emp?.name || '?'} photoUrl={emp?.photo_url} size={26} />
+        <strong style={{ fontSize:14 }}>{emp?.name || '—'}</strong>
+        <span style={{ background:'#f3f4f6', color:'#374151', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>{t.type}</span>
+        <span style={statusBadgeStyle(t.status)}>{t.status}</span>
+        {t.half_day && (
+          <span style={{ background:'#e0f2fe', color:'#0369a1', border:'1px solid #bae6fd', fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20 }}>
+            {single ? 'Half Day' : '+ Half Day'}
+          </span>
+        )}
+      </div>
+
+      <div style={{ fontSize:13, color:'#6b7280' }}>
+        {t.start_date ? formatRange(t.start_date, t.end_date) : t.dates}
+        <span style={{ color:'#9ca3af' }}> · {daysLabel(t.days, single)}</span>
+      </div>
+
+      {t.notes && t.notes !== '—' && (
+        <div style={{ fontSize:12, color:'#9ca3af', fontStyle:'italic', marginTop:4 }}>{t.notes}</div>
+      )}
+
+      {isAdmin && (
+        <div className="card-actions">
+          {t.status === 'Pending' && (
             <>
               <button className="btn-sm green" onClick={() => onSetStatus(t, 'Approved')}>Approve</button>
               <button className="btn-sm red" onClick={() => onSetStatus(t, 'Denied')}>Deny</button>
             </>
           )}
-          {isAdmin && <button className="btn-icon" onClick={() => onEdit(t)}><Edit2 size={13} /></button>}
-          {isAdmin && <button className="btn-icon danger" onClick={() => onDelete(t.id)}><Trash2 size={13} /></button>}
+          <button className="btn-icon" onClick={() => onEdit(t)}><Edit2 size={13} /></button>
+          <button className="btn-icon danger" onClick={() => onDelete(t.id)}><Trash2 size={13} /></button>
         </div>
-      </div>
+      )}
     </div>
   );
 }
