@@ -17,11 +17,12 @@ const ROLE_STYLE = {
   'VA':                 { dot: '#db2777', bg: '#fdf2f8', border: '#fbcfe8', text: '#9d174d' },
 };
 
-const EMP_STATUS = ['Good Standing', 'Warning', 'Final Warning'];
+const EMP_STATUS = ['Good Standing', 'Warning', 'Final Warning', 'Terminated'];
 const EMP_STATUS_STYLE = {
   'Good Standing': { bg: '#f0fdf4', border: '#86efac', text: '#166534', dot: '#16a34a' },
   'Warning':       { bg: '#fffbeb', border: '#fde68a', text: '#92400e', dot: '#f59e0b' },
   'Final Warning': { bg: '#fef2f2', border: '#fecaca', text: '#dc2626', dot: '#dc2626' },
+  'Terminated':    { bg: '#f3f4f6', border: '#e5e7eb', text: '#374151', dot: '#374151' },
 };
 
 const AVATAR_BG = ['#1B3A2D','#224d3a','#2d6349','#0d2d1a','#3a7a5c','#4d9973','#163025'];
@@ -39,13 +40,12 @@ const emptyEmp = { name:'', role:'Crew Worker', phone:'', email:'', start_date:'
 
 export default function Team() {
   const { data, addEmployee, updateEmployee, deleteEmployee, isAdmin, isSuperAdmin, uploadEmployeePhoto } = useApp();
-  const [tab, setTab]               = useState('active');   // 'active' | 'terminated'
+  const [tab, setTab]               = useState('all');   // 'all' | 'active' | 'terminated'
   const [modal, setModal]           = useState(null);
   const [form, setForm]             = useState(emptyEmp);
   const [search, setSearch]         = useState('');
   const [filterRole, setFilterRole] = useState('All');
   const [confirmDel, setConfirmDel] = useState(null);
-  const [confirmTerm, setConfirmTerm] = useState(null); // employee to terminate
   const [termReason, setTermReason] = useState('');
   const [saving, setSaving]         = useState(false);
   const [uploading, setUploading]   = useState(false);
@@ -60,30 +60,23 @@ export default function Team() {
 
   const save = async () => {
     if (!form.name.trim()) { setError('Name is required.'); return; }
+    if (form.employment_status === 'Terminated' && !form.termination_reason?.trim()) {
+      setError('Termination reason is required.'); return;
+    }
     setSaving(true); setError('');
     try {
-      const emp = { ...form, name:form.name.trim(), wage:parseFloat(form.wage)||0, avatar:form.name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() };
-      delete emp.strikes; // no longer used
+      const emp = {
+        ...form,
+        name: form.name.trim(),
+        wage: parseFloat(form.wage)||0,
+        avatar: form.name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),
+        active: form.employment_status !== 'Terminated',
+        termination_date: form.employment_status === 'Terminated' ? (form.termination_date || new Date().toISOString().split('T')[0]) : null,
+      };
+      delete emp.strikes;
       if (modal==='add') await addEmployee(emp); else await updateEmployee(emp);
       closeModal();
     } catch(e) { setError('Save failed. Check permissions.'); }
-    setSaving(false);
-  };
-
-  const handleTerminate = async () => {
-    if (!termReason.trim()) return;
-    setSaving(true);
-    try {
-      await updateEmployee({
-        ...confirmTerm,
-        employment_status: 'Terminated',
-        termination_reason: termReason.trim(),
-        termination_date: new Date().toISOString().split('T')[0],
-        active: false,
-      });
-      setConfirmTerm(null);
-      setTermReason('');
-    } catch(e) { alert('Failed to terminate. Try again.'); }
     setSaving(false);
   };
 
@@ -109,7 +102,8 @@ export default function Team() {
 
   const upcomingBdays = activeEmps.filter(e => isBirthdayUpcoming(e.birthday));
 
-  const filtered = (tab === 'active' ? activeEmps : terminatedEmps)
+  const filteredBase = tab === 'all' ? allEmps : tab === 'active' ? activeEmps : terminatedEmps;
+  const filtered = filteredBase
     .filter(e => filterRole==='All' || e.role===filterRole || (filterRole==='Crew Worker' && e.role==='Crew Member'))
     .filter(e => !search || e.name.toLowerCase().includes(search.toLowerCase()) || (e.role||'').toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => {
@@ -129,18 +123,21 @@ export default function Team() {
         </div>
       )}
 
-      {/* Active / Terminated sub-tabs */}
-      <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center' }}>
-        <button onClick={()=>{ setTab('active'); setFilterRole('All'); }}
-          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'1px solid', fontSize:13, fontWeight:600, cursor:'pointer', background:tab==='active'?'#1B3A2D':'#fff', color:tab==='active'?'#fff':'#374151', borderColor:tab==='active'?'#1B3A2D':'#e5e7eb' }}>
-          <UserCheck size={14}/> Active
-          <span style={{ background:tab==='active'?'rgba(255,255,255,0.2)':'#f3f4f6', color:tab==='active'?'#fff':'#6b7280', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{activeEmps.length}</span>
-        </button>
-        <button onClick={()=>{ setTab('terminated'); setFilterRole('All'); }}
-          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'1px solid', fontSize:13, fontWeight:600, cursor:'pointer', background:tab==='terminated'?'#374151':'#fff', color:tab==='terminated'?'#fff':'#374151', borderColor:tab==='terminated'?'#374151':'#e5e7eb' }}>
-          <UserX size={14}/> Terminated
-          {terminatedEmps.length > 0 && <span style={{ background:tab==='terminated'?'rgba(255,255,255,0.2)':'#f3f4f6', color:tab==='terminated'?'#fff':'#6b7280', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{terminatedEmps.length}</span>}
-        </button>
+      {/* All | Active | Terminated sub-tabs */}
+      <div style={{ display:'flex', gap:6, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
+        <div style={{ display:'flex', background:'#f3f4f6', borderRadius:10, padding:3, gap:2 }}>
+          {[
+            { key:'all',        label:'All',        count:allEmps.length,        icon:null },
+            { key:'active',     label:'Active',     count:activeEmps.length,     icon:<UserCheck size={13}/> },
+            { key:'terminated', label:'Terminated', count:terminatedEmps.length, icon:<UserX size={13}/> },
+          ].map(({ key, label, count, icon }) => (
+            <button key={key} onClick={()=>{ setTab(key); setFilterRole('All'); }}
+              style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:8, border:'none', fontSize:12, fontWeight:600, cursor:'pointer', background:tab===key?'#fff':'none', color:tab===key?'#1B3A2D':'#6b7280', boxShadow:tab===key?'0 1px 3px rgba(0,0,0,0.1)':'none', transition:'all 0.15s' }}>
+              {icon}{label}
+              {count > 0 && <span style={{ background:tab===key?'#f0fdf4':'#e5e7eb', color:tab===key?'#1B3A2D':'#6b7280', fontSize:10, fontWeight:700, padding:'1px 5px', borderRadius:8 }}>{count}</span>}
+            </button>
+          ))}
+        </div>
 
         <div style={{ marginLeft:'auto', display:'flex', gap:8, alignItems:'center' }}>
           <div style={{ position:'relative' }}>
@@ -148,12 +145,12 @@ export default function Team() {
             <input style={{ ...inp, paddingLeft:30, width:160, padding:'8px 10px 8px 30px', fontSize:13 }}
               placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} />
           </div>
-          {isAdmin && tab==='active' && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Add Employee</button>}
+          {isAdmin && tab!=='terminated' && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Add Employee</button>}
         </div>
       </div>
 
-      {/* Role filter chips — only for active tab */}
-      {tab === 'active' && (
+      {/* Role filter chips — only for active/all tab */}
+      {tab !== 'terminated' && (
         <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:16 }}>
           <button onClick={()=>setFilterRole('All')}
             style={{ padding:'5px 12px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:filterRole==='All'?'#1B3A2D':'#fff', color:filterRole==='All'?'#fff':'#374151', borderColor:filterRole==='All'?'#1B3A2D':'#e5e7eb' }}>
@@ -223,7 +220,6 @@ export default function Team() {
 
               <div className="card-actions">
                 {isAdmin && !isTerminated && <button className="btn-icon" onClick={()=>openEdit(emp)} title="Edit"><Edit2 size={14}/></button>}
-                {isAdmin && !isTerminated && <button className="btn-icon danger" onClick={()=>{ setConfirmTerm(emp); setTermReason(''); }} title="Terminate" style={{ color:'#dc2626' }}><UserX size={14}/></button>}
                 {isAdmin && isTerminated && <button className="btn-icon" onClick={()=>handleReactivate(emp)} title="Reactivate" style={{ color:'#16a34a' }}><UserCheck size={14}/></button>}
                 {isSuperAdmin && <button className="btn-icon danger" onClick={()=>setConfirmDel(emp)} title="Delete permanently"><Trash2 size={14}/></button>}
               </div>
@@ -268,9 +264,19 @@ export default function Team() {
               {form.role !== 'Owner' && <label>Wage ($/hr)<input style={inp} type="number" step="0.25" min="0" value={form.wage} onChange={e=>setForm(f=>({...f,wage:e.target.value}))} placeholder="15.00" /></label>}
               {form.role !== 'Owner' && (
                 <label>Status
-                  <select style={inp} value={form.employment_status} onChange={e=>setForm(f=>({...f,employment_status:e.target.value}))}>
+                  <select style={inp} value={form.employment_status} onChange={e=>{
+                    setForm(f=>({...f, employment_status:e.target.value, termination_reason: e.target.value!=='Terminated'?null:f.termination_reason}));
+                    if (e.target.value === 'Terminated') setTermReason('');
+                  }}>
                     {EMP_STATUS.map(s=><option key={s} value={s}>{s}</option>)}
                   </select>
+                </label>
+              )}
+              {form.employment_status === 'Terminated' && (
+                <label style={{ gridColumn:'1/-1' }}>
+                  Reason for Termination <span style={{ color:'#dc2626', fontSize:11 }}>Required</span>
+                  <textarea value={form.termination_reason||''} onChange={e=>setForm(f=>({...f,termination_reason:e.target.value}))} rows={2}
+                    style={{ ...inp, resize:'none' }} placeholder="e.g. No-show, policy violation, end of season..." />
                 </label>
               )}
             </div>
@@ -279,40 +285,6 @@ export default function Team() {
               <button className="btn-secondary" onClick={closeModal}>Cancel</button>
               <button className="btn-primary" onClick={save} disabled={saving||!form.name.trim()}>
                 <Check size={15}/> {saving?'Saving...':modal==='add'?'Add Employee':'Save Changes'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Terminate Confirm Modal */}
-      {confirmTerm && (
-        <div className="modal-overlay" onClick={()=>setConfirmTerm(null)}>
-          <div className="modal" style={{ maxWidth:420 }} onClick={e=>e.stopPropagation()}>
-            <div className="modal-header">
-              <h3 style={{ display:'flex', alignItems:'center', gap:8 }}><UserX size={18} color="#dc2626"/> Terminate Employee</h3>
-              <button className="btn-icon" onClick={()=>setConfirmTerm(null)}><X size={18}/></button>
-            </div>
-            <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb', marginBottom:16 }}>
-              <Avatar name={confirmTerm.name} photoUrl={confirmTerm.photo_url} size={44} />
-              <div>
-                <div style={{ fontWeight:700, fontSize:14 }}>{confirmTerm.name}</div>
-                <div style={{ fontSize:13, color:'#6b7280' }}>{confirmTerm.role}</div>
-              </div>
-            </div>
-            <p style={{ fontSize:13, color:'#6b7280', marginBottom:12 }}>
-              This will move <strong>{confirmTerm.name}</strong> to the Terminated tab. Their full record, incidents, and history will be preserved.
-            </p>
-            <label style={{ display:'flex', flexDirection:'column', gap:6, fontSize:13, fontWeight:600, color:'#374151', marginBottom:4 }}>
-              Reason for Termination <span style={{ color:'#dc2626', fontSize:11 }}>Required</span>
-              <textarea value={termReason} onChange={e=>setTermReason(e.target.value)} rows={3}
-                style={{ ...inp, resize:'none' }} placeholder="e.g. No-show, policy violation, end of season..." />
-            </label>
-            <div className="modal-footer">
-              <button className="btn-secondary" onClick={()=>setConfirmTerm(null)}>Cancel</button>
-              <button onClick={handleTerminate} disabled={saving||!termReason.trim()}
-                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:termReason.trim()?'pointer':'not-allowed', background:termReason.trim()?'#dc2626':'#f3f4f6', color:termReason.trim()?'#fff':'#9ca3af' }}>
-                <UserX size={14}/> {saving?'Processing...':'Terminate'}
               </button>
             </div>
           </div>
