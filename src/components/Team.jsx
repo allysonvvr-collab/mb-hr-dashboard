@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Edit2, Trash2, X, Check, Camera, Search, UserX, UserCheck, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Camera, Search, UserX, UserCheck } from 'lucide-react';
 import { isBirthdayUpcoming, daysUntilBirthday, formatDateSA, formatBirthdaySA } from '../lib/timezone';
 import EmptyState from './EmptyState';
 
@@ -17,35 +17,34 @@ const ROLE_STYLE = {
   'VA':                 { dot: '#db2777', bg: '#fdf2f8', border: '#fbcfe8', text: '#9d174d' },
 };
 
-const EMP_STATUS = ['Good Standing', 'Warning', 'Final Warning', 'Terminated'];
+const EMP_STATUSES = ['Good Standing', 'Warning', 'Final Warning'];
 const EMP_STATUS_STYLE = {
-  'Good Standing': { bg: '#f0fdf4', border: '#86efac', text: '#166534', dot: '#16a34a' },
-  'Warning':       { bg: '#fffbeb', border: '#fde68a', text: '#92400e', dot: '#f59e0b' },
-  'Final Warning': { bg: '#fef2f2', border: '#fecaca', text: '#dc2626', dot: '#dc2626' },
-  'Terminated':    { bg: '#f3f4f6', border: '#e5e7eb', text: '#374151', dot: '#374151' },
+  'Good Standing': null, // show nothing — clean
+  'Warning':       { bg: '#fffbeb', border: '#fde68a', text: '#92400e' },
+  'Final Warning': { bg: '#fef2f2', border: '#fecaca', text: '#dc2626' },
 };
 
 const AVATAR_BG = ['#1B3A2D','#224d3a','#2d6349','#0d2d1a','#3a7a5c','#4d9973','#163025'];
-
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', color:'#111827', boxSizing:'border-box' };
 
 function Avatar({ name, photoUrl, size=44, grayscale=false }) {
   const initials = (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const bg = AVATAR_BG[initials.charCodeAt(0) % AVATAR_BG.length];
-  if (photoUrl) return <img src={photoUrl} alt={name} style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'2px solid #e5e7eb', filter:grayscale?'grayscale(100%)':'none', opacity:grayscale?0.6:1 }} />;
-  return <div style={{ width:size, height:size, borderRadius:'50%', background:grayscale?'#9ca3af':bg, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:size>40?14:11, flexShrink:0, opacity:grayscale?0.7:1 }}>{initials}</div>;
+  if (photoUrl) return <img src={photoUrl} alt={name} style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'2px solid #e5e7eb', filter:grayscale?'grayscale(1)':'none', opacity:grayscale?0.55:1 }} />;
+  return <div style={{ width:size, height:size, borderRadius:'50%', background:grayscale?'#9ca3af':bg, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:size>40?14:11, flexShrink:0, opacity:grayscale?0.6:1 }}>{initials}</div>;
 }
 
-const emptyEmp = { name:'', role:'Crew Worker', phone:'', email:'', start_date:'', birthday:'', wage:'', employment_status:'Good Standing', photo_url:'' };
+const emptyEmp = { name:'', role:'Crew Worker', phone:'', email:'', start_date:'', birthday:'', wage:'', employment_status:'Good Standing', rehireable:'', photo_url:'' };
 
 export default function Team() {
   const { data, addEmployee, updateEmployee, deleteEmployee, isAdmin, isSuperAdmin, uploadEmployeePhoto } = useApp();
-  const [tab, setTab]               = useState('all');   // 'all' | 'active' | 'terminated'
+  const [tab, setTab]               = useState('active'); // 'active' | 'terminated'
   const [modal, setModal]           = useState(null);
   const [form, setForm]             = useState(emptyEmp);
   const [search, setSearch]         = useState('');
   const [filterRole, setFilterRole] = useState('All');
   const [confirmDel, setConfirmDel] = useState(null);
+  const [termModal, setTermModal]   = useState(null); // employee being terminated
   const [termReason, setTermReason] = useState('');
   const [saving, setSaving]         = useState(false);
   const [uploading, setUploading]   = useState(false);
@@ -53,30 +52,29 @@ export default function Team() {
 
   const openAdd  = () => { setForm(emptyEmp); setError(''); setModal('add'); };
   const openEdit = (emp) => {
-    setForm({ id:emp.id, name:emp.name||'', role:emp.role||'Crew Worker', phone:emp.phone||'', email:emp.email||'', start_date:emp.start_date||'', birthday:emp.birthday||'', wage:emp.wage!==undefined?String(emp.wage):'', employment_status:emp.employment_status||'Good Standing', photo_url:emp.photo_url||'', avatar:emp.avatar||'' });
+    setForm({ id:emp.id, name:emp.name||'', role:emp.role||'Crew Worker', phone:emp.phone||'', email:emp.email||'', start_date:emp.start_date||'', birthday:emp.birthday||'', wage:emp.wage!==undefined?String(emp.wage):'', employment_status:emp.employment_status||'Good Standing', rehireable:emp.rehireable||'', photo_url:emp.photo_url||'', avatar:emp.avatar||'' });
     setError(''); setModal(emp);
   };
   const closeModal = () => { setModal(null); setError(''); };
 
   const save = async () => {
     if (!form.name.trim()) { setError('Name is required.'); return; }
-    if (form.employment_status === 'Terminated' && !form.termination_reason?.trim()) {
-      setError('Termination reason is required.'); return;
-    }
     setSaving(true); setError('');
     try {
-      const emp = {
-        ...form,
-        name: form.name.trim(),
-        wage: parseFloat(form.wage)||0,
-        avatar: form.name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(),
-        active: form.employment_status !== 'Terminated',
-        termination_date: form.employment_status === 'Terminated' ? (form.termination_date || new Date().toISOString().split('T')[0]) : null,
-      };
-      delete emp.strikes;
+      const emp = { ...form, name:form.name.trim(), wage:parseFloat(form.wage)||0, avatar:form.name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() };
       if (modal==='add') await addEmployee(emp); else await updateEmployee(emp);
       closeModal();
-    } catch(e) { setError('Save failed. Check permissions.'); }
+    } catch(e) { setError('Save failed.'); }
+    setSaving(false);
+  };
+
+  const handleTerminate = async () => {
+    if (!termReason.trim() || !termModal) return;
+    setSaving(true);
+    try {
+      await updateEmployee({ ...termModal, employment_status:'Terminated', termination_reason:termReason.trim(), termination_date:new Date().toISOString().split('T')[0], active:false });
+      setTermModal(null); setTermReason('');
+    } catch(e) { alert('Failed. Try again.'); }
     setSaving(false);
   };
 
@@ -89,54 +87,50 @@ export default function Team() {
     if (!file) return;
     if (file.size > 5*1024*1024) { alert('Max 5MB'); return; }
     setUploading(true);
-    try {
-      const url = await uploadEmployeePhoto(form.id, file);
-      setForm(f => ({ ...f, photo_url: url+'?t='+Date.now() }));
-    } catch(err) { alert('Upload failed: '+err.message); }
+    try { const url = await uploadEmployeePhoto(form.id, file); setForm(f=>({...f, photo_url:url+'?t='+Date.now()})); }
+    catch(err) { alert('Upload failed: '+err.message); }
     setUploading(false);
   };
 
-  const allEmps = data.employees || [];
+  const allEmps        = data.employees || [];
   const activeEmps     = allEmps.filter(e => e.employment_status !== 'Terminated');
   const terminatedEmps = allEmps.filter(e => e.employment_status === 'Terminated');
+  const upcomingBdays  = activeEmps.filter(e => isBirthdayUpcoming(e.birthday));
 
-  const upcomingBdays = activeEmps.filter(e => isBirthdayUpcoming(e.birthday));
-
-  const filteredBase = tab === 'all' ? allEmps : tab === 'active' ? activeEmps : terminatedEmps;
-  const filtered = filteredBase
+  const baseList = tab === 'active' ? activeEmps : terminatedEmps;
+  const filtered = baseList
     .filter(e => filterRole==='All' || e.role===filterRole || (filterRole==='Crew Worker' && e.role==='Crew Member'))
     .filter(e => !search || e.name.toLowerCase().includes(search.toLowerCase()) || (e.role||'').toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => {
-      const ri = r => ROLES.indexOf(r) === -1 ? 99 : ROLES.indexOf(r);
-      return ri(a.role) - ri(b.role) || a.name.localeCompare(b.name);
+      const ri = r => ROLES.indexOf(r)===-1?99:ROLES.indexOf(r);
+      return ri(a.role)-ri(b.role) || a.name.localeCompare(b.name);
     });
 
   const counts = {};
-  ROLES.forEach(r => { counts[r] = activeEmps.filter(e => e.role===r || (r==='Crew Worker' && e.role==='Crew Member')).length; });
+  ROLES.forEach(r => { counts[r] = activeEmps.filter(e => e.role===r||(r==='Crew Worker'&&e.role==='Crew Member')).length; });
 
   return (
     <div>
-      {upcomingBdays.length > 0 && tab === 'active' && (
+      {upcomingBdays.length > 0 && tab==='active' && (
         <div className="alert-banner">
           <strong>Upcoming Birthdays — Next 30 Days:</strong>{' '}
           {upcomingBdays.map(e=>`${e.name} — ${formatBirthdaySA(e.birthday)} (${daysUntilBirthday(e.birthday)}d away)`).join(', ')}
         </div>
       )}
 
-      {/* All | Active | Terminated sub-tabs */}
-      <div style={{ display:'flex', gap:6, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
+      {/* ── Active / Terminated tabs ── */}
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16, flexWrap:'wrap' }}>
         <div style={{ display:'flex', background:'#f3f4f6', borderRadius:10, padding:3, gap:2 }}>
-          {[
-            { key:'all',        label:'All',        count:allEmps.length,        icon:null },
-            { key:'active',     label:'Active',     count:activeEmps.length,     icon:<UserCheck size={13}/> },
-            { key:'terminated', label:'Terminated', count:terminatedEmps.length, icon:<UserX size={13}/> },
-          ].map(({ key, label, count, icon }) => (
-            <button key={key} onClick={()=>{ setTab(key); setFilterRole('All'); }}
-              style={{ display:'flex', alignItems:'center', gap:5, padding:'6px 12px', borderRadius:8, border:'none', fontSize:12, fontWeight:600, cursor:'pointer', background:tab===key?'#fff':'none', color:tab===key?'#1B3A2D':'#6b7280', boxShadow:tab===key?'0 1px 3px rgba(0,0,0,0.1)':'none', transition:'all 0.15s' }}>
-              {icon}{label}
-              {count > 0 && <span style={{ background:tab===key?'#f0fdf4':'#e5e7eb', color:tab===key?'#1B3A2D':'#6b7280', fontSize:10, fontWeight:700, padding:'1px 5px', borderRadius:8 }}>{count}</span>}
-            </button>
-          ))}
+          <button onClick={()=>{ setTab('active'); setFilterRole('All'); }}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:tab==='active'?'#fff':'transparent', color:tab==='active'?'#1B3A2D':'#6b7280', boxShadow:tab==='active'?'0 1px 3px rgba(0,0,0,0.1)':'none' }}>
+            <UserCheck size={14}/> Active
+            <span style={{ background:tab==='active'?'#f0fdf4':'transparent', color:tab==='active'?'#1B3A2D':'#9ca3af', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:8 }}>{activeEmps.length}</span>
+          </button>
+          <button onClick={()=>{ setTab('terminated'); setFilterRole('All'); }}
+            style={{ display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:'pointer', background:tab==='terminated'?'#fff':'transparent', color:tab==='terminated'?'#374151':'#6b7280', boxShadow:tab==='terminated'?'0 1px 3px rgba(0,0,0,0.1)':'none' }}>
+            <UserX size={14}/> Terminated
+            {terminatedEmps.length>0 && <span style={{ background:tab==='terminated'?'#f3f4f6':'transparent', color:tab==='terminated'?'#374151':'#9ca3af', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:8 }}>{terminatedEmps.length}</span>}
+          </button>
         </div>
 
         <div style={{ marginLeft:'auto', display:'flex', gap:8, alignItems:'center' }}>
@@ -145,20 +139,19 @@ export default function Team() {
             <input style={{ ...inp, paddingLeft:30, width:160, padding:'8px 10px 8px 30px', fontSize:13 }}
               placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} />
           </div>
-          {isAdmin && tab!=='terminated' && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Add Employee</button>}
+          {isAdmin && tab==='active' && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Add Employee</button>}
         </div>
       </div>
 
-      {/* Role filter chips — only for active/all tab */}
-      {tab !== 'terminated' && (
+      {/* Role filter — active tab only */}
+      {tab==='active' && (
         <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:16 }}>
           <button onClick={()=>setFilterRole('All')}
             style={{ padding:'5px 12px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:filterRole==='All'?'#1B3A2D':'#fff', color:filterRole==='All'?'#fff':'#374151', borderColor:filterRole==='All'?'#1B3A2D':'#e5e7eb' }}>
             All ({activeEmps.length})
           </button>
           {ROLES.filter(r=>counts[r]>0).map(r => {
-            const st = ROLE_STYLE[r];
-            const active = filterRole===r;
+            const st=ROLE_STYLE[r]; const active=filterRole===r;
             return (
               <button key={r} onClick={()=>setFilterRole(r)}
                 style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:active?st.dot:'#fff', color:active?'#fff':st.text, borderColor:active?st.dot:st.border }}>
@@ -170,19 +163,17 @@ export default function Team() {
         </div>
       )}
 
-      {/* Employee grid */}
+      {/* Employee cards */}
       <div className="card-grid">
         {filtered.map(emp => {
-          const st = ROLE_STYLE[emp.role] || ROLE_STYLE['Crew Worker'];
-          const empStatusStyle = EMP_STATUS_STYLE[emp.employment_status] || EMP_STATUS_STYLE['Good Standing'];
+          const st = ROLE_STYLE[emp.role]||ROLE_STYLE['Crew Worker'];
           const isTerminated = emp.employment_status === 'Terminated';
-
-          // Get this employee's incidents
-          const empIncidents = (data.incidents||[]).filter(i => String(i.employee_id) === String(emp.id));
-          const incidentCost = empIncidents.reduce((s,i) => s+Number(i.cost||0), 0);
+          const empSt = EMP_STATUS_STYLE[emp.employment_status];
+          const empIncidents = (data.incidents||[]).filter(i => String(i.employee_id)===String(emp.id));
+          const incidentCost = empIncidents.reduce((s,i)=>s+Number(i.cost||0),0);
 
           return (
-            <div key={emp.id} className="emp-card" style={{ opacity: isTerminated ? 0.85 : 1 }}>
+            <div key={emp.id} className="emp-card" style={{ opacity:isTerminated?0.8:1 }}>
               <div style={{ display:'flex', gap:12, alignItems:'flex-start', justifyContent:'space-between' }}>
                 <div style={{ display:'flex', gap:10, alignItems:'center', minWidth:0 }}>
                   <Avatar name={emp.name} photoUrl={emp.photo_url} size={44} grayscale={isTerminated} />
@@ -195,14 +186,9 @@ export default function Team() {
                   </div>
                 </div>
                 {/* Status badge */}
-                {!isTerminated && emp.employment_status && emp.employment_status !== 'Good Standing' && (
-                  <span style={{ background:empStatusStyle.bg, border:`1px solid ${empStatusStyle.border}`, color:empStatusStyle.text, fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:20, whiteSpace:'nowrap', flexShrink:0 }}>
+                {empSt && !isTerminated && (
+                  <span style={{ background:empSt.bg, border:`1px solid ${empSt.border}`, color:empSt.text, fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, whiteSpace:'nowrap', flexShrink:0 }}>
                     {emp.employment_status}
-                  </span>
-                )}
-                {isTerminated && (
-                  <span style={{ background:'#f3f4f6', color:'#374151', fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:20, whiteSpace:'nowrap', flexShrink:0 }}>
-                    Terminated
                   </span>
                 )}
               </div>
@@ -210,26 +196,41 @@ export default function Team() {
               <div className="emp-details" style={{ marginTop:10 }}>
                 <div><span>Phone</span><span>{emp.phone||'—'}</span></div>
                 <div><span>Email</span><span style={{ fontSize:12 }}>{emp.email||'—'}</span></div>
-                <div><span>Start</span><span>{emp.start_date ? formatDateSA(emp.start_date) : '—'}</span></div>
-                <div><span>Birthday</span><span>{emp.birthday ? formatBirthdaySA(emp.birthday) : '—'}</span></div>
-                {emp.role !== 'Owner' && !isTerminated && <div><span>Wage</span><span style={{ color:'#1B3A2D', fontWeight:700 }}>${Number(emp.wage||0).toFixed(2)}/hr</span></div>}
-                {isTerminated && emp.termination_date && <div><span>Terminated</span><span style={{ color:'#6b7280' }}>{emp.termination_date}</span></div>}
-                {isTerminated && emp.termination_reason && <div><span>Reason</span><span style={{ color:'#374151', fontSize:12 }}>{emp.termination_reason}</span></div>}
-                {isTerminated && incidentCost > 0 && <div><span>Incidents</span><span style={{ color:'#dc2626', fontWeight:600 }}>${incidentCost.toLocaleString()} total</span></div>}
+                <div><span>Start</span><span>{emp.start_date?formatDateSA(emp.start_date):'—'}</span></div>
+                <div><span>Birthday</span><span>{emp.birthday?formatBirthdaySA(emp.birthday):'—'}</span></div>
+                {emp.role!=='Owner' && !isTerminated && <div><span>Wage</span><span style={{ color:'#1B3A2D', fontWeight:700 }}>${Number(emp.wage||0).toFixed(2)}/hr</span></div>}
+                {isTerminated && <div><span>Terminated</span><span style={{ color:'#6b7280' }}>{emp.termination_date||'—'}</span></div>}
+                {isTerminated && emp.termination_reason && <div><span>Reason</span><span style={{ fontSize:12, color:'#374151' }}>{emp.termination_reason}</span></div>}
+                {isTerminated && incidentCost>0 && <div><span>Incidents</span><span style={{ color:'#dc2626', fontWeight:600 }}>${incidentCost.toLocaleString()}</span></div>}
               </div>
 
               <div className="card-actions">
                 {isAdmin && !isTerminated && <button className="btn-icon" onClick={()=>openEdit(emp)} title="Edit"><Edit2 size={14}/></button>}
-                {isAdmin && isTerminated && <button className="btn-icon" onClick={()=>handleReactivate(emp)} title="Reactivate" style={{ color:'#16a34a' }}><UserCheck size={14}/></button>}
+                {isAdmin && !isTerminated && (
+                  <button className="btn-icon" onClick={()=>{ setTermModal(emp); setTermReason(''); }} title="Terminate"
+                    style={{ borderColor:'#fecaca', color:'#dc2626' }}>
+                    <UserX size={14}/>
+                  </button>
+                )}
+                {isAdmin && isTerminated && (
+                  <button className="btn-icon" onClick={()=>handleReactivate(emp)} title="Reactivate"
+                    style={{ borderColor:'#86efac', color:'#16a34a' }}>
+                    <UserCheck size={14}/>
+                  </button>
+                )}
                 {isSuperAdmin && <button className="btn-icon danger" onClick={()=>setConfirmDel(emp)} title="Delete permanently"><Trash2 size={14}/></button>}
               </div>
             </div>
           );
         })}
-        {filtered.length===0 && <div style={{ gridColumn:'1/-1' }}><EmptyState icon={tab==='terminated'?UserX:Search} message={tab==='terminated'?'No terminated employees.':'No employees found.'} /></div>}
+        {filtered.length===0 && (
+          <div style={{ gridColumn:'1/-1' }}>
+            <EmptyState icon={tab==='terminated'?UserX:Search} message={tab==='terminated'?'No terminated employees.':'No employees found.'} />
+          </div>
+        )}
       </div>
 
-      {/* Add/Edit Modal */}
+      {/* ── Add/Edit Modal ── */}
       {modal && (
         <div className="modal-overlay" onClick={closeModal}>
           <div className="modal" onClick={e=>e.stopPropagation()}>
@@ -261,24 +262,21 @@ export default function Team() {
               <label>Email<input style={inp} type="email" value={form.email} onChange={e=>setForm(f=>({...f,email:e.target.value}))} placeholder="email@example.com" /></label>
               <label>Start Date<input style={inp} type="date" value={form.start_date} onChange={e=>setForm(f=>({...f,start_date:e.target.value}))} /></label>
               <label>Birthday<input style={inp} type="date" value={form.birthday} onChange={e=>setForm(f=>({...f,birthday:e.target.value}))} /></label>
-              {form.role !== 'Owner' && <label>Wage ($/hr)<input style={inp} type="number" step="0.25" min="0" value={form.wage} onChange={e=>setForm(f=>({...f,wage:e.target.value}))} placeholder="15.00" /></label>}
-              {form.role !== 'Owner' && (
+              {form.role!=='Owner' && <label>Wage ($/hr)<input style={inp} type="number" step="0.25" min="0" value={form.wage} onChange={e=>setForm(f=>({...f,wage:e.target.value}))} placeholder="15.00" /></label>}
+              {form.role!=='Owner' && (
                 <label>Status
-                  <select style={inp} value={form.employment_status} onChange={e=>{
-                    setForm(f=>({...f, employment_status:e.target.value, termination_reason: e.target.value!=='Terminated'?null:f.termination_reason}));
-                    if (e.target.value === 'Terminated') setTermReason('');
-                  }}>
-                    {EMP_STATUS.map(s=><option key={s} value={s}>{s}</option>)}
+                  <select style={inp} value={form.employment_status} onChange={e=>setForm(f=>({...f,employment_status:e.target.value}))}>
+                    {EMP_STATUSES.map(s=><option key={s} value={s}>{s}</option>)}
                   </select>
                 </label>
               )}
-              {form.employment_status === 'Terminated' && (
-                <label style={{ gridColumn:'1/-1' }}>
-                  Reason for Termination <span style={{ color:'#dc2626', fontSize:11 }}>Required</span>
-                  <textarea value={form.termination_reason||''} onChange={e=>setForm(f=>({...f,termination_reason:e.target.value}))} rows={2}
-                    style={{ ...inp, resize:'none' }} placeholder="e.g. No-show, policy violation, end of season..." />
-                </label>
-              )}
+              <label>Rehireable
+                <select style={inp} value={form.rehireable} onChange={e=>setForm(f=>({...f,rehireable:e.target.value}))}>
+                  <option value="">Not set</option>
+                  <option value="Yes">Yes</option>
+                  <option value="No">No</option>
+                </select>
+              </label>
             </div>
 
             <div className="modal-footer">
@@ -291,12 +289,50 @@ export default function Team() {
         </div>
       )}
 
-      {/* Delete confirm */}
+      {/* ── Terminate Modal ── */}
+      {termModal && (
+        <div className="modal-overlay" onClick={()=>setTermModal(null)}>
+          <div className="modal" style={{ maxWidth:400 }} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Terminate Employee</h3>
+              <button className="btn-icon" onClick={()=>setTermModal(null)}><X size={18}/></button>
+            </div>
+
+            <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb', marginBottom:16 }}>
+              <Avatar name={termModal.name} photoUrl={termModal.photo_url} size={44} />
+              <div>
+                <div style={{ fontWeight:700, fontSize:14 }}>{termModal.name}</div>
+                <div style={{ fontSize:13, color:'#6b7280' }}>{termModal.role}</div>
+              </div>
+            </div>
+
+            <p style={{ fontSize:13, color:'#6b7280', marginBottom:14 }}>
+              Their full record, incidents, and history will be preserved in the Terminated tab.
+            </p>
+
+            <label style={{ display:'flex', flexDirection:'column', gap:6, fontSize:13, fontWeight:600, color:'#374151' }}>
+              Reason for Termination
+              <textarea value={termReason} onChange={e=>setTermReason(e.target.value)} rows={3}
+                style={{ ...inp, resize:'none' }} placeholder="e.g. No-show, policy violation, end of season..." autoFocus />
+            </label>
+
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={()=>setTermModal(null)}>Cancel</button>
+              <button onClick={handleTerminate} disabled={saving||!termReason.trim()}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:termReason.trim()?'pointer':'not-allowed', background:termReason.trim()?'#dc2626':'#f3f4f6', color:termReason.trim()?'#fff':'#9ca3af' }}>
+                <UserX size={14}/> {saving?'Processing...':'Terminate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Modal ── */}
       {confirmDel && (
         <div className="modal-overlay" onClick={()=>setConfirmDel(null)}>
           <div className="modal" style={{ maxWidth:360 }} onClick={e=>e.stopPropagation()}>
             <div className="modal-header"><h3>Delete Permanently?</h3><button className="btn-icon" onClick={()=>setConfirmDel(null)}><X size={18}/></button></div>
-            <p style={{ color:'#6b7280', fontSize:14, margin:'8px 0 20px' }}>This will permanently delete <strong>{confirmDel.name}</strong> and all their records. This cannot be undone.</p>
+            <p style={{ color:'#6b7280', fontSize:14, margin:'8px 0 20px' }}>This permanently deletes <strong>{confirmDel.name}</strong> and all their records. Cannot be undone.</p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={()=>setConfirmDel(null)}>Cancel</button>
               <button onClick={()=>{deleteEmployee(confirmDel.id);setConfirmDel(null);}} style={{ background:'#dc2626', color:'#fff', border:'none', padding:'8px 16px', borderRadius:8, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
