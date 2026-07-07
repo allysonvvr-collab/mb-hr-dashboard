@@ -28,7 +28,11 @@ const AVATAR_BG = ['#1B3A2D','#224d3a','#2d6349','#0d2d1a','#3a7a5c','#4d9973','
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', color:'#111827', boxSizing:'border-box' };
 
 // Safely coerce Supabase boolean (can return true/false/null/"true"/"false")
-const toBool = v => v === true || v === 'true' ? true : v === false || v === 'false' ? false : null;
+const toBool = v => {
+  if (v === true  || v === 'true'  || v === 1) return true;
+  if (v === false || v === 'false' || v === 0) return false;
+  return null;
+};
 
 function Avatar({ name, photoUrl, size=44, grayscale=false }) {
   const initials = (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -78,7 +82,7 @@ export default function Team() {
     if (form.employment_status === 'Terminated' && !form.termination_reason?.trim()) { setError('Termination reason is required.'); return; }
     setSaving(true); setError('');
     try {
-      const emp = { ...form, name:form.name.trim(), wage:parseFloat(form.wage)||0, avatar:form.name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), active:form.employment_status!=='Terminated', termination_date:form.employment_status==='Terminated'?(form.termination_date||new Date().toISOString().split('T')[0]):null, termination_reason:form.employment_status==='Terminated'?form.termination_reason:null, rehireable:form.employment_status==='Terminated'?form.rehireable:null };
+      const emp = { ...form, name:form.name.trim(), wage:parseFloat(form.wage)||0, avatar:form.name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), active:form.employment_status!=='Terminated', termination_date:form.employment_status==='Terminated'?(form.termination_date||new Date().toISOString().split('T')[0]):null, termination_reason:form.employment_status==='Terminated'?form.termination_reason:null, rehireable:form.employment_status==='Terminated'?(form.rehireable===null||form.rehireable===undefined?null:Boolean(form.rehireable)):null };
       if (modal==='add') await addEmployee(emp); else await updateEmployee(emp);
       closeModal();
     } catch(e) { setError('Save failed.'); }
@@ -123,7 +127,7 @@ export default function Team() {
   return (
     <div>
       {/* Birthday alert — active only */}
-      {upcomingBdays.length > 0 && tab !== 'terminated' && (
+      {upcomingBdays.length > 0 && (
         <div className="alert-banner">
           <strong>Upcoming Birthdays — Next 30 Days:</strong>{' '}
           {upcomingBdays.map(e=>`${e.name} — ${formatBirthdaySA(e.birthday)} (${daysUntilBirthday(e.birthday)}d away)`).join(', ')}
@@ -263,13 +267,18 @@ export default function Team() {
                 {isTerminated && emp.termination_date && (
                   <div><span>Terminated</span><span>{emp.termination_date}</span></div>
                 )}
-                {isTerminated && emp.termination_reason && (
-                  <div><span>Reason</span><span style={{ fontSize:12 }}>{emp.termination_reason}</span></div>
-                )}
                 {isTerminated && incidentCost > 0 && (
                   <div><span>Incidents</span><span style={{ color:'#dc2626', fontWeight:600 }}>${incidentCost.toLocaleString()}</span></div>
                 )}
               </div>
+
+              {/* Termination reason — clean block */}
+              {isTerminated && emp.termination_reason && (
+                <div style={{ marginTop:8, padding:'8px 10px', background:'#f9fafb', borderRadius:6, border:'1px solid #f3f4f6' }}>
+                  <div style={{ fontSize:10, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:3 }}>Reason</div>
+                  <div style={{ fontSize:12, color:'#374151', lineHeight:1.5 }}>{emp.termination_reason}</div>
+                </div>
+              )}
 
               {/* Actions */}
               {isAdmin && (
