@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Plus, Edit2, Trash2, X, Check, Camera, Search } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Camera, Search, UserX, UserCheck, AlertTriangle } from 'lucide-react';
 import { isBirthdayUpcoming, daysUntilBirthday, formatDateSA, formatBirthdaySA } from '../lib/timezone';
 import EmptyState from './EmptyState';
 
@@ -17,33 +17,43 @@ const ROLE_STYLE = {
   'VA':                 { dot: '#db2777', bg: '#fdf2f8', border: '#fbcfe8', text: '#9d174d' },
 };
 
+const EMP_STATUS = ['Good Standing', 'Warning', 'Final Warning'];
+const EMP_STATUS_STYLE = {
+  'Good Standing': { bg: '#f0fdf4', border: '#86efac', text: '#166534', dot: '#16a34a' },
+  'Warning':       { bg: '#fffbeb', border: '#fde68a', text: '#92400e', dot: '#f59e0b' },
+  'Final Warning': { bg: '#fef2f2', border: '#fecaca', text: '#dc2626', dot: '#dc2626' },
+};
+
 const AVATAR_BG = ['#1B3A2D','#224d3a','#2d6349','#0d2d1a','#3a7a5c','#4d9973','#163025'];
 
 const inp = { padding:'10px 12px', border:'1px solid #d1d5db', borderRadius:8, fontSize:15, fontFamily:'inherit', outline:'none', width:'100%', background:'#fff', color:'#111827', boxSizing:'border-box' };
 
-function Avatar({ name, photoUrl, size=44 }) {
+function Avatar({ name, photoUrl, size=44, grayscale=false }) {
   const initials = (name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
   const bg = AVATAR_BG[initials.charCodeAt(0) % AVATAR_BG.length];
-  if (photoUrl) return <img src={photoUrl} alt={name} style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'2px solid #e5e7eb' }} />;
-  return <div style={{ width:size, height:size, borderRadius:'50%', background:bg, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:size>40?14:11, flexShrink:0 }}>{initials}</div>;
+  if (photoUrl) return <img src={photoUrl} alt={name} style={{ width:size, height:size, borderRadius:'50%', objectFit:'cover', flexShrink:0, border:'2px solid #e5e7eb', filter:grayscale?'grayscale(100%)':'none', opacity:grayscale?0.6:1 }} />;
+  return <div style={{ width:size, height:size, borderRadius:'50%', background:grayscale?'#9ca3af':bg, color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700, fontSize:size>40?14:11, flexShrink:0, opacity:grayscale?0.7:1 }}>{initials}</div>;
 }
 
-const emptyEmp = { name:'', role:'Crew Worker', phone:'', email:'', start_date:'', birthday:'', wage:'', strikes:0, photo_url:'' };
+const emptyEmp = { name:'', role:'Crew Worker', phone:'', email:'', start_date:'', birthday:'', wage:'', employment_status:'Good Standing', photo_url:'' };
 
 export default function Team() {
   const { data, addEmployee, updateEmployee, deleteEmployee, isAdmin, isSuperAdmin, uploadEmployeePhoto } = useApp();
+  const [tab, setTab]               = useState('active');   // 'active' | 'terminated'
   const [modal, setModal]           = useState(null);
   const [form, setForm]             = useState(emptyEmp);
   const [search, setSearch]         = useState('');
   const [filterRole, setFilterRole] = useState('All');
   const [confirmDel, setConfirmDel] = useState(null);
+  const [confirmTerm, setConfirmTerm] = useState(null); // employee to terminate
+  const [termReason, setTermReason] = useState('');
   const [saving, setSaving]         = useState(false);
   const [uploading, setUploading]   = useState(false);
   const [error, setError]           = useState('');
 
   const openAdd  = () => { setForm(emptyEmp); setError(''); setModal('add'); };
   const openEdit = (emp) => {
-    setForm({ id:emp.id, name:emp.name||'', role:emp.role||'Crew Worker', phone:emp.phone||'', email:emp.email||'', start_date:emp.start_date||'', birthday:emp.birthday||'', wage:emp.wage!==undefined?String(emp.wage):'', strikes:emp.strikes||0, photo_url:emp.photo_url||'', avatar:emp.avatar||'' });
+    setForm({ id:emp.id, name:emp.name||'', role:emp.role||'Crew Worker', phone:emp.phone||'', email:emp.email||'', start_date:emp.start_date||'', birthday:emp.birthday||'', wage:emp.wage!==undefined?String(emp.wage):'', employment_status:emp.employment_status||'Good Standing', photo_url:emp.photo_url||'', avatar:emp.avatar||'' });
     setError(''); setModal(emp);
   };
   const closeModal = () => { setModal(null); setError(''); };
@@ -52,11 +62,33 @@ export default function Team() {
     if (!form.name.trim()) { setError('Name is required.'); return; }
     setSaving(true); setError('');
     try {
-      const emp = { ...form, name:form.name.trim(), wage:parseFloat(form.wage)||0, strikes:parseInt(form.strikes)||0, avatar:form.name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() };
+      const emp = { ...form, name:form.name.trim(), wage:parseFloat(form.wage)||0, avatar:form.name.trim().split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() };
+      delete emp.strikes; // no longer used
       if (modal==='add') await addEmployee(emp); else await updateEmployee(emp);
       closeModal();
     } catch(e) { setError('Save failed. Check permissions.'); }
     setSaving(false);
+  };
+
+  const handleTerminate = async () => {
+    if (!termReason.trim()) return;
+    setSaving(true);
+    try {
+      await updateEmployee({
+        ...confirmTerm,
+        employment_status: 'Terminated',
+        termination_reason: termReason.trim(),
+        termination_date: new Date().toISOString().split('T')[0],
+        active: false,
+      });
+      setConfirmTerm(null);
+      setTermReason('');
+    } catch(e) { alert('Failed to terminate. Try again.'); }
+    setSaving(false);
+  };
+
+  const handleReactivate = async (emp) => {
+    await updateEmployee({ ...emp, employment_status:'Good Standing', termination_reason:null, termination_date:null, active:true });
   };
 
   const handlePhoto = async (e) => {
@@ -71,11 +103,13 @@ export default function Team() {
     setUploading(false);
   };
 
-  const upcomingBdays = (data.employees||[]).filter(e => isBirthdayUpcoming(e.birthday));
-
-  // Filter employees
   const allEmps = data.employees || [];
-  const filtered = allEmps
+  const activeEmps     = allEmps.filter(e => e.employment_status !== 'Terminated');
+  const terminatedEmps = allEmps.filter(e => e.employment_status === 'Terminated');
+
+  const upcomingBdays = activeEmps.filter(e => isBirthdayUpcoming(e.birthday));
+
+  const filtered = (tab === 'active' ? activeEmps : terminatedEmps)
     .filter(e => filterRole==='All' || e.role===filterRole || (filterRole==='Crew Worker' && e.role==='Crew Member'))
     .filter(e => !search || e.name.toLowerCase().includes(search.toLowerCase()) || (e.role||'').toLowerCase().includes(search.toLowerCase()))
     .sort((a,b) => {
@@ -83,64 +117,78 @@ export default function Team() {
       return ri(a.role) - ri(b.role) || a.name.localeCompare(b.name);
     });
 
-  // Role counts
   const counts = {};
-  ROLES.forEach(r => {
-    counts[r] = allEmps.filter(e => e.role===r || (r==='Crew Worker' && e.role==='Crew Member')).length;
-  });
-
-  const rs = ROLE_STYLE[filterRole] || {};
+  ROLES.forEach(r => { counts[r] = activeEmps.filter(e => e.role===r || (r==='Crew Worker' && e.role==='Crew Member')).length; });
 
   return (
     <div>
-      {upcomingBdays.length > 0 && (
+      {upcomingBdays.length > 0 && tab === 'active' && (
         <div className="alert-banner">
           <strong>Upcoming Birthdays — Next 30 Days:</strong>{' '}
           {upcomingBdays.map(e=>`${e.name} — ${formatBirthdaySA(e.birthday)} (${daysUntilBirthday(e.birthday)}d away)`).join(', ')}
         </div>
       )}
 
-      {/* Header row */}
-      <div className="section-header">
-<h2 className="section-title">Team <span style={{ color:'#9ca3af', fontWeight:400, fontSize:13 }}>({filtered.length})</span></h2>
-        <div style={{ display:'flex', gap:8, alignItems:'center', flexWrap:'wrap' }}>
+      {/* Active / Terminated sub-tabs */}
+      <div style={{ display:'flex', gap:8, marginBottom:16, alignItems:'center' }}>
+        <button onClick={()=>{ setTab('active'); setFilterRole('All'); }}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'1px solid', fontSize:13, fontWeight:600, cursor:'pointer', background:tab==='active'?'#1B3A2D':'#fff', color:tab==='active'?'#fff':'#374151', borderColor:tab==='active'?'#1B3A2D':'#e5e7eb' }}>
+          <UserCheck size={14}/> Active
+          <span style={{ background:tab==='active'?'rgba(255,255,255,0.2)':'#f3f4f6', color:tab==='active'?'#fff':'#6b7280', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{activeEmps.length}</span>
+        </button>
+        <button onClick={()=>{ setTab('terminated'); setFilterRole('All'); }}
+          style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'1px solid', fontSize:13, fontWeight:600, cursor:'pointer', background:tab==='terminated'?'#374151':'#fff', color:tab==='terminated'?'#fff':'#374151', borderColor:tab==='terminated'?'#374151':'#e5e7eb' }}>
+          <UserX size={14}/> Terminated
+          {terminatedEmps.length > 0 && <span style={{ background:tab==='terminated'?'rgba(255,255,255,0.2)':'#f3f4f6', color:tab==='terminated'?'#fff':'#6b7280', fontSize:11, fontWeight:700, padding:'1px 6px', borderRadius:10 }}>{terminatedEmps.length}</span>}
+        </button>
+
+        <div style={{ marginLeft:'auto', display:'flex', gap:8, alignItems:'center' }}>
           <div style={{ position:'relative' }}>
             <Search size={14} style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#9ca3af' }} />
-            <input style={{ ...inp, paddingLeft:30, width:180, padding:'8px 10px 8px 30px', fontSize:13 }}
+            <input style={{ ...inp, paddingLeft:30, width:160, padding:'8px 10px 8px 30px', fontSize:13 }}
               placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} />
           </div>
-          {isAdmin && <button className="btn-primary" onClick={openAdd}><Plus size={15} /> Add Employee</button>}
+          {isAdmin && tab==='active' && <button className="btn-primary" onClick={openAdd}><Plus size={15}/> Add Employee</button>}
         </div>
       </div>
 
-      {/* Filter chips */}
-      <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:16 }}>
-        <button onClick={()=>setFilterRole('All')}
-          style={{ padding:'5px 12px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:filterRole==='All'?'#1B3A2D':'#fff', color:filterRole==='All'?'#fff':'#374151', borderColor:filterRole==='All'?'#1B3A2D':'#e5e7eb' }}>
-          All ({allEmps.length})
-        </button>
-        {ROLES.filter(r=>counts[r]>0).map(r => {
-          const st = ROLE_STYLE[r];
-          const active = filterRole===r;
-          return (
-            <button key={r} onClick={()=>setFilterRole(r)}
-              style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:active?st.dot:'#fff', color:active?'#fff':st.text, borderColor:active?st.dot:st.border }}>
-              <span style={{ width:7, height:7, borderRadius:'50%', background:active?'rgba(255,255,255,0.7)':st.dot, display:'inline-block' }} />
-              {r} ({counts[r]})
-            </button>
-          );
-        })}
-      </div>
+      {/* Role filter chips — only for active tab */}
+      {tab === 'active' && (
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:16 }}>
+          <button onClick={()=>setFilterRole('All')}
+            style={{ padding:'5px 12px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:filterRole==='All'?'#1B3A2D':'#fff', color:filterRole==='All'?'#fff':'#374151', borderColor:filterRole==='All'?'#1B3A2D':'#e5e7eb' }}>
+            All ({activeEmps.length})
+          </button>
+          {ROLES.filter(r=>counts[r]>0).map(r => {
+            const st = ROLE_STYLE[r];
+            const active = filterRole===r;
+            return (
+              <button key={r} onClick={()=>setFilterRole(r)}
+                style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:20, border:'1px solid', fontSize:12, fontWeight:600, cursor:'pointer', background:active?st.dot:'#fff', color:active?'#fff':st.text, borderColor:active?st.dot:st.border }}>
+                <span style={{ width:7, height:7, borderRadius:'50%', background:active?'rgba(255,255,255,0.7)':st.dot, display:'inline-block' }} />
+                {r} ({counts[r]})
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Employee grid */}
       <div className="card-grid">
         {filtered.map(emp => {
           const st = ROLE_STYLE[emp.role] || ROLE_STYLE['Crew Worker'];
+          const empStatusStyle = EMP_STATUS_STYLE[emp.employment_status] || EMP_STATUS_STYLE['Good Standing'];
+          const isTerminated = emp.employment_status === 'Terminated';
+
+          // Get this employee's incidents
+          const empIncidents = (data.incidents||[]).filter(i => String(i.employee_id) === String(emp.id));
+          const incidentCost = empIncidents.reduce((s,i) => s+Number(i.cost||0), 0);
+
           return (
-            <div key={emp.id} className="emp-card">
+            <div key={emp.id} className="emp-card" style={{ opacity: isTerminated ? 0.85 : 1 }}>
               <div style={{ display:'flex', gap:12, alignItems:'flex-start', justifyContent:'space-between' }}>
                 <div style={{ display:'flex', gap:10, alignItems:'center', minWidth:0 }}>
-                  <Avatar name={emp.name} photoUrl={emp.photo_url} size={44} />
+                  <Avatar name={emp.name} photoUrl={emp.photo_url} size={44} grayscale={isTerminated} />
                   <div style={{ minWidth:0 }}>
                     <div style={{ fontWeight:700, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{emp.name}</div>
                     <span style={{ background:st.bg, border:`1px solid ${st.border}`, color:st.text, fontSize:11, fontWeight:600, padding:'1px 7px', borderRadius:20, display:'inline-flex', alignItems:'center', gap:4, marginTop:2 }}>
@@ -149,7 +197,17 @@ export default function Team() {
                     </span>
                   </div>
                 </div>
-                {emp.strikes > 0 && <span style={{ background:emp.strikes>=2?'#dc2626':'#f59e0b', color:'#fff', fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:20, whiteSpace:'nowrap', flexShrink:0 }}>{emp.strikes} Strike{emp.strikes>1?'s':''}</span>}
+                {/* Status badge */}
+                {!isTerminated && emp.employment_status && emp.employment_status !== 'Good Standing' && (
+                  <span style={{ background:empStatusStyle.bg, border:`1px solid ${empStatusStyle.border}`, color:empStatusStyle.text, fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:20, whiteSpace:'nowrap', flexShrink:0 }}>
+                    {emp.employment_status}
+                  </span>
+                )}
+                {isTerminated && (
+                  <span style={{ background:'#f3f4f6', color:'#374151', fontSize:10, fontWeight:700, padding:'2px 7px', borderRadius:20, whiteSpace:'nowrap', flexShrink:0 }}>
+                    Terminated
+                  </span>
+                )}
               </div>
 
               <div className="emp-details" style={{ marginTop:10 }}>
@@ -157,19 +215,22 @@ export default function Team() {
                 <div><span>Email</span><span style={{ fontSize:12 }}>{emp.email||'—'}</span></div>
                 <div><span>Start</span><span>{emp.start_date ? formatDateSA(emp.start_date) : '—'}</span></div>
                 <div><span>Birthday</span><span>{emp.birthday ? formatBirthdaySA(emp.birthday) : '—'}</span></div>
-                {emp.role !== 'Owner' && <div><span>Wage</span><span style={{ color:'#1B3A2D', fontWeight:700 }}>${Number(emp.wage||0).toFixed(2)}/hr</span></div>}
+                {emp.role !== 'Owner' && !isTerminated && <div><span>Wage</span><span style={{ color:'#1B3A2D', fontWeight:700 }}>${Number(emp.wage||0).toFixed(2)}/hr</span></div>}
+                {isTerminated && emp.termination_date && <div><span>Terminated</span><span style={{ color:'#6b7280' }}>{emp.termination_date}</span></div>}
+                {isTerminated && emp.termination_reason && <div><span>Reason</span><span style={{ color:'#374151', fontSize:12 }}>{emp.termination_reason}</span></div>}
+                {isTerminated && incidentCost > 0 && <div><span>Incidents</span><span style={{ color:'#dc2626', fontWeight:600 }}>${incidentCost.toLocaleString()} total</span></div>}
               </div>
 
-              {isAdmin && (
-                <div className="card-actions">
-                  <button className="btn-icon" onClick={()=>openEdit(emp)} title="Edit"><Edit2 size={14}/></button>
-                  {isSuperAdmin && <button className="btn-icon danger" onClick={()=>setConfirmDel(emp)} title="Delete"><Trash2 size={14}/></button>}
-                </div>
-              )}
+              <div className="card-actions">
+                {isAdmin && !isTerminated && <button className="btn-icon" onClick={()=>openEdit(emp)} title="Edit"><Edit2 size={14}/></button>}
+                {isAdmin && !isTerminated && <button className="btn-icon danger" onClick={()=>{ setConfirmTerm(emp); setTermReason(''); }} title="Terminate" style={{ color:'#dc2626' }}><UserX size={14}/></button>}
+                {isAdmin && isTerminated && <button className="btn-icon" onClick={()=>handleReactivate(emp)} title="Reactivate" style={{ color:'#16a34a' }}><UserCheck size={14}/></button>}
+                {isSuperAdmin && <button className="btn-icon danger" onClick={()=>setConfirmDel(emp)} title="Delete permanently"><Trash2 size={14}/></button>}
+              </div>
             </div>
           );
         })}
-        {filtered.length===0 && <EmptyState icon={Search} message="No employees found." style={{ gridColumn:'1/-1' }} />}
+        {filtered.length===0 && <div style={{ gridColumn:'1/-1' }}><EmptyState icon={tab==='terminated'?UserX:Search} message={tab==='terminated'?'No terminated employees.':'No employees found.'} /></div>}
       </div>
 
       {/* Add/Edit Modal */}
@@ -182,14 +243,13 @@ export default function Team() {
             </div>
             {error && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{error}</div>}
 
-            {/* Photo section (edit only) */}
             {modal!=='add' && (
               <div style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 14px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb', marginBottom:14 }}>
                 <Avatar name={form.name} photoUrl={form.photo_url} size={52} />
                 <div>
                   <div style={{ fontSize:13, fontWeight:600, color:'#374151', marginBottom:4 }}>Profile Photo</div>
                   <label style={{ display:'inline-flex', alignItems:'center', gap:6, background:'#1B3A2D', color:'#fff', padding:'6px 12px', borderRadius:7, fontSize:12, fontWeight:600, cursor:'pointer' }}>
-                    <Camera size={13} />
+                    <Camera size={13}/>
                     {uploading?'Uploading...':form.photo_url?'Change':'Add Photo'}
                     <input type="file" accept="image/*" style={{ display:'none' }} onChange={handlePhoto} disabled={uploading} />
                   </label>
@@ -206,7 +266,13 @@ export default function Team() {
               <label>Start Date<input style={inp} type="date" value={form.start_date} onChange={e=>setForm(f=>({...f,start_date:e.target.value}))} /></label>
               <label>Birthday<input style={inp} type="date" value={form.birthday} onChange={e=>setForm(f=>({...f,birthday:e.target.value}))} /></label>
               {form.role !== 'Owner' && <label>Wage ($/hr)<input style={inp} type="number" step="0.25" min="0" value={form.wage} onChange={e=>setForm(f=>({...f,wage:e.target.value}))} placeholder="15.00" /></label>}
-              {form.role !== 'Owner' && <label>Strikes (0–3)<input style={inp} type="number" min="0" max="3" value={form.strikes} onChange={e=>setForm(f=>({...f,strikes:e.target.value}))} /></label>}
+              {form.role !== 'Owner' && (
+                <label>Status
+                  <select style={inp} value={form.employment_status} onChange={e=>setForm(f=>({...f,employment_status:e.target.value}))}>
+                    {EMP_STATUS.map(s=><option key={s} value={s}>{s}</option>)}
+                  </select>
+                </label>
+              )}
             </div>
 
             <div className="modal-footer">
@@ -219,16 +285,50 @@ export default function Team() {
         </div>
       )}
 
+      {/* Terminate Confirm Modal */}
+      {confirmTerm && (
+        <div className="modal-overlay" onClick={()=>setConfirmTerm(null)}>
+          <div className="modal" style={{ maxWidth:420 }} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ display:'flex', alignItems:'center', gap:8 }}><UserX size={18} color="#dc2626"/> Terminate Employee</h3>
+              <button className="btn-icon" onClick={()=>setConfirmTerm(null)}><X size={18}/></button>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb', marginBottom:16 }}>
+              <Avatar name={confirmTerm.name} photoUrl={confirmTerm.photo_url} size={44} />
+              <div>
+                <div style={{ fontWeight:700, fontSize:14 }}>{confirmTerm.name}</div>
+                <div style={{ fontSize:13, color:'#6b7280' }}>{confirmTerm.role}</div>
+              </div>
+            </div>
+            <p style={{ fontSize:13, color:'#6b7280', marginBottom:12 }}>
+              This will move <strong>{confirmTerm.name}</strong> to the Terminated tab. Their full record, incidents, and history will be preserved.
+            </p>
+            <label style={{ display:'flex', flexDirection:'column', gap:6, fontSize:13, fontWeight:600, color:'#374151', marginBottom:4 }}>
+              Reason for Termination <span style={{ color:'#dc2626', fontSize:11 }}>Required</span>
+              <textarea value={termReason} onChange={e=>setTermReason(e.target.value)} rows={3}
+                style={{ ...inp, resize:'none' }} placeholder="e.g. No-show, policy violation, end of season..." />
+            </label>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={()=>setConfirmTerm(null)}>Cancel</button>
+              <button onClick={handleTerminate} disabled={saving||!termReason.trim()}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', fontSize:13, fontWeight:600, cursor:termReason.trim()?'pointer':'not-allowed', background:termReason.trim()?'#dc2626':'#f3f4f6', color:termReason.trim()?'#fff':'#9ca3af' }}>
+                <UserX size={14}/> {saving?'Processing...':'Terminate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Delete confirm */}
       {confirmDel && (
         <div className="modal-overlay" onClick={()=>setConfirmDel(null)}>
           <div className="modal" style={{ maxWidth:360 }} onClick={e=>e.stopPropagation()}>
-            <div className="modal-header"><h3>Delete Employee?</h3><button className="btn-icon" onClick={()=>setConfirmDel(null)}><X size={18}/></button></div>
-            <p style={{ color:'#6b7280', fontSize:14, margin:'8px 0 20px' }}>Permanently delete <strong>{confirmDel.name}</strong>? This cannot be undone.</p>
+            <div className="modal-header"><h3>Delete Permanently?</h3><button className="btn-icon" onClick={()=>setConfirmDel(null)}><X size={18}/></button></div>
+            <p style={{ color:'#6b7280', fontSize:14, margin:'8px 0 20px' }}>This will permanently delete <strong>{confirmDel.name}</strong> and all their records. This cannot be undone.</p>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={()=>setConfirmDel(null)}>Cancel</button>
               <button onClick={()=>{deleteEmployee(confirmDel.id);setConfirmDel(null);}} style={{ background:'#dc2626', color:'#fff', border:'none', padding:'8px 16px', borderRadius:8, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6 }}>
-                <Trash2 size={14}/> Delete
+                <Trash2 size={14}/> Delete Forever
               </button>
             </div>
           </div>

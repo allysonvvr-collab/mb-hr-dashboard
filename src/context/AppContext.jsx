@@ -114,8 +114,8 @@ export function AppProvider({ children }) {
   // ── CRUD helpers ─────────────────────────────────────────────
   const crud = {
     // EMPLOYEES
-    addEmployee:    async (e)  => { const { error } = await supabase.from('employees').insert([{ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, photo_url:e.photo_url||null, active:true }]); if (error) throw error; fetchAll(); },
-    updateEmployee: async (e)  => { const { error } = await supabase.from('employees').update({ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, strikes:e.strikes, avatar:e.avatar, photo_url:e.photo_url||null }).eq('id', e.id); if (error) throw error; fetchAll(); },
+    addEmployee:    async (e)  => { const { error } = await supabase.from('employees').insert([{ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, avatar:e.avatar, photo_url:e.photo_url||null, active:true, employment_status:e.employment_status||'Good Standing' }]); if (error) throw error; fetchAll(); },
+    updateEmployee: async (e)  => { const { error } = await supabase.from('employees').update({ name:e.name, role:e.role, phone:e.phone, email:e.email, start_date:e.start_date||null, birthday:e.birthday, wage:e.wage, avatar:e.avatar, photo_url:e.photo_url||null, employment_status:e.employment_status||'Good Standing', termination_reason:e.termination_reason||null, termination_date:e.termination_date||null, active:e.active!==undefined?e.active:true }).eq('id', e.id); if (error) throw error; fetchAll(); },
     deleteEmployee: async (id) => { const { error } = await supabase.from('employees').delete().eq('id', id); if (error) throw error; fetchAll(); },
 
     // APPLICANTS
