@@ -60,7 +60,8 @@ export default function Team() {
   const [search, setSearch]             = useState('');
   const [filterRole, setFilterRole]     = useState('All');
   const [filterRehire, setFilterRehire] = useState('all'); // 'all' | 'yes' | 'no' | 'unset'
-  const [confirmDel, setConfirmDel]     = useState(null);
+  const [confirmDel, setConfirmDel]         = useState(null);
+  const [confirmReactivate, setConfirmReactivate] = useState(null);
   const [saving, setSaving]             = useState(false);
   const [uploading, setUploading]       = useState(false);
   const [error, setError]               = useState('');
@@ -285,7 +286,7 @@ export default function Team() {
                 <div className="card-actions">
                   <button className="btn-icon" onClick={()=>openEdit(emp)} title="Edit"><Edit2 size={14}/></button>
                   {isTerminated && (
-                    <button className="btn-icon" onClick={()=>handleReactivate(emp)} title="Reactivate" style={{ color:'#16a34a' }}>
+                    <button className="btn-icon" onClick={()=>setConfirmReactivate(emp)} title="Reactivate" style={{ color:'#16a34a' }}>
                       <UserCheck size={14}/>
                     </button>
                   )}
@@ -368,6 +369,35 @@ export default function Team() {
               <button className="btn-secondary" onClick={closeModal}>Cancel</button>
               <button className="btn-primary" onClick={save} disabled={saving||!form.name.trim()}>
                 <Check size={15}/> {saving?'Saving...':modal==='add'?'Add Employee':'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Reactivate Confirm ── */}
+      {confirmReactivate && (
+        <div className="modal-overlay" onClick={()=>setConfirmReactivate(null)}>
+          <div className="modal" style={{ maxWidth:380 }} onClick={e=>e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 style={{ display:'flex', alignItems:'center', gap:8 }}><UserCheck size={18} color="#16a34a"/> Reactivate Employee?</h3>
+              <button className="btn-icon" onClick={()=>setConfirmReactivate(null)}><X size={18}/></button>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', background:'#f9fafb', borderRadius:8, border:'1px solid #e5e7eb', marginBottom:14 }}>
+              <Avatar name={confirmReactivate.name} photoUrl={confirmReactivate.photo_url} size={42} />
+              <div>
+                <div style={{ fontWeight:700, fontSize:14 }}>{confirmReactivate.name}</div>
+                <div style={{ fontSize:13, color:'#6b7280' }}>{confirmReactivate.role}</div>
+              </div>
+            </div>
+            <p style={{ color:'#6b7280', fontSize:14, marginBottom:20 }}>
+              This will move <strong>{confirmReactivate.name}</strong> back to Active with status <strong>Good Standing</strong>. Their termination record will be cleared.
+            </p>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={()=>setConfirmReactivate(null)}>Cancel</button>
+              <button onClick={async ()=>{ await handleReactivate(confirmReactivate); setConfirmReactivate(null); }}
+                style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:8, border:'none', background:'#16a34a', color:'#fff', fontWeight:600, fontSize:13, cursor:'pointer' }}>
+                <UserCheck size={14}/> Yes, Reactivate
               </button>
             </div>
           </div>
