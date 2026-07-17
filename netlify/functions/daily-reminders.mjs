@@ -33,7 +33,11 @@ function getAnniversaryInfo(startDate) {
   const monthDay = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   const days = daysUntil(monthDay);
   if (days === null) return null;
-  const years = today.getFullYear() - start.getFullYear() + (days <= 60 ? 0 : 1);
+  // Completed years of service
+  let years = today.getFullYear() - start.getFullYear();
+  const thisYearAnniv = new Date(today.getFullYear(), start.getMonth(), start.getDate());
+  if (thisYearAnniv > today) years -= 1;
+  years = Math.max(0, years);
   return { monthDay, days, years };
 }
 

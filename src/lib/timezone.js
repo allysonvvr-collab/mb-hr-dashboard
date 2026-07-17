@@ -134,16 +134,15 @@ export function daysUntilAnniversary(startDateStr) {
   return Math.ceil((next - today) / (1000 * 60 * 60 * 24));
 }
 
-/** Years of service as of the next upcoming anniversary */
+/** Completed years of service (how many full years they have worked) */
 export function anniversaryYears(startDateStr) {
   if (!startDateStr) return null;
   const start = new Date(startDateStr + 'T12:00:00Z');
   if (isNaN(start)) return null;
   const today = nowSA();
   let years = today.getFullYear() - start.getFullYear();
-  const daysAway = daysUntilAnniversary(startDateStr);
-  // If the anniversary already passed this year (daysAway counts toward next year's date), bump by 1
+  // If this year's anniversary hasn't happened yet, they haven't completed that year
   const thisYearAnniv = new Date(today.getFullYear(), start.getMonth(), start.getDate());
-  if (thisYearAnniv < today) years += 1;
-  return years;
+  if (thisYearAnniv > today) years -= 1;
+  return Math.max(0, years);
 }
