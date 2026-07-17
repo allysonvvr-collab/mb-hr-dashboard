@@ -130,8 +130,10 @@ export function daysUntilAnniversary(startDateStr) {
   const today = nowSA();
   const thisYear = today.getFullYear();
   let next = new Date(thisYear, start.getMonth(), start.getDate());
-  if (next < today) next = new Date(thisYear + 1, start.getMonth(), start.getDate());
-  return Math.ceil((next - today) / (1000 * 60 * 60 * 24));
+  // Only push to next year if strictly in the past (not today)
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (next < todayMidnight) next = new Date(thisYear + 1, start.getMonth(), start.getDate());
+  return Math.ceil((next - todayMidnight) / (1000 * 60 * 60 * 24));
 }
 
 /** Completed years of service (how many full years they have worked) */
