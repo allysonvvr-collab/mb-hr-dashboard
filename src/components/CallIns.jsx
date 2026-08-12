@@ -16,63 +16,63 @@ export default function CallIns() {
   const allCallIns = data.callIns || [];
   const activeEmps = (data.employees || []).filter(e => e.employment_status !== 'Terminated');
 
-  const thisMonthKey = new Date().toISOString().slice(0,7);
+  const thisMonthKey = new Date().toISOString().slice(0, 7);
   const thisMonth    = allCallIns.filter(c => c.date?.startsWith(thisMonthKey)).length;
-  const flagged      = activeEmps.filter(emp => allCallIns.filter(c => String(c.employee_id) === String(emp.id)).length >= 3).length;
+  const repeatCount  = activeEmps.filter(emp =>
+    allCallIns.filter(c => String(c.employee_id) === String(emp.id)).length >= 3
+  ).length;
+
+  const getEmpLogs = (empId) =>
+    allCallIns
+      .filter(c => String(c.employee_id) === String(empId))
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
 
   const save = async () => {
     if (!form.employeeId || !form.date || !form.reason.trim()) return;
     setSaving(true);
     await addCallIn({ employeeId: parseInt(form.employeeId), date: form.date, reason: form.reason.trim() });
-    setForm({ employeeId:'', date:todaySA(), reason:'' });
+    setForm({ employeeId: '', date: todaySA(), reason: '' });
     setModal(false);
     setSaving(false);
   };
 
-  // ── Drill-in: thread view for one employee ──────────────
+  // ── Drill-in: single employee thread ──
   if (selected) {
-    const logs = allCallIns
-      .filter(c => String(c.employee_id) === String(selected.id))
-      .sort((a,b) => (b.date||'').localeCompare(a.date||''));
-
+    const logs = getEmpLogs(selected.id);
     return (
       <div>
         <button onClick={() => setSelected(null)}
-          style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', color:'#1B3A2D', fontWeight:600, fontSize:13, cursor:'pointer', marginBottom:16, padding:0 }}>
-          <ArrowLeft size={16}/> All Employees
+          style={{ display:'flex', alignItems:'center', gap:6, background:'none', border:'none', color:'#1B3A2D', fontWeight:600, fontSize:13, cursor:'pointer', marginBottom:20, padding:0 }}>
+          <ArrowLeft size={16}/> Back
         </button>
 
         {/* Employee summary card */}
-        <div className="emp-card" style={{ marginBottom:20 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:14, justifyContent:'space-between' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-              <Avatar name={selected.name} photoUrl={selected.photo_url} size={52} />
-              <div>
-                <div style={{ fontWeight:700, fontSize:16 }}>{selected.name}</div>
-                <div style={{ fontSize:13, color:'#6b7280', marginTop:2 }}>{selected.role}</div>
-              </div>
-            </div>
-            <div style={{ textAlign:'right' }}>
-              <div style={{ fontSize:36, fontWeight:800, fontFamily:'Manrope,sans-serif', lineHeight:1,
-                color: logs.length >= 3 ? '#dc2626' : logs.length >= 2 ? '#f59e0b' : '#1B3A2D' }}>
-                {logs.length}
-              </div>
-              <div style={{ fontSize:11, color:'#9ca3af' }}>total call-ins</div>
-            </div>
+        <div style={{ display:'flex', alignItems:'center', gap:14, padding:'18px', background:'#fff', borderRadius:12, border:'1px solid #e5e7eb', marginBottom:20, boxShadow:'0 1px 4px rgba(0,0,0,0.05)' }}>
+          <Avatar name={selected.name} photoUrl={selected.photo_url} size={52} />
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:700, fontSize:17 }}>{selected.name}</div>
+            <div style={{ fontSize:13, color:'#6b7280', marginTop:2 }}>{selected.role}</div>
           </div>
-          {isAdmin && (
-            <div style={{ marginTop:12, borderTop:'1px solid #f3f4f6', paddingTop:12 }}>
-              <button className="btn-primary" onClick={() => { setForm({ employeeId:String(selected.id), date:todaySA(), reason:'' }); setModal(true); }}>
-                <Plus size={14}/> Log Call-In for {selected.name.split(' ')[0]}
-              </button>
+          <div style={{ textAlign:'right' }}>
+            <div style={{ fontSize:36, fontWeight:800, fontFamily:'Manrope,sans-serif', lineHeight:1, color: logs.length >= 3 ? '#dc2626' : logs.length >= 1 ? '#f59e0b' : '#1B3A2D' }}>
+              {logs.length}
             </div>
-          )}
+            <div style={{ fontSize:11, color:'#9ca3af', marginTop:3 }}>call-in{logs.length !== 1 ? 's' : ''}</div>
+          </div>
         </div>
 
-        {/* Thread of call-ins */}
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        {isAdmin && (
+          <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:14 }}>
+            <button className="btn-primary"
+              onClick={() => { setForm({ employeeId: String(selected.id), date: todaySA(), reason: '' }); setModal(true); }}>
+              <Plus size={14}/> Log Call-In
+            </button>
+          </div>
+        )}
+
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {logs.map((log, i) => (
-            <div key={log.id} className="list-card" style={{ borderLeft:`3px solid ${i===0?'#f59e0b':'#e5e7eb'}` }}>
+            <div key={log.id} className="list-card" style={{ borderLeft:`3px solid ${i === 0 ? '#f59e0b' : '#e5e7eb'}` }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:8 }}>
                 <div style={{ flex:1 }}>
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:5 }}>
@@ -86,27 +86,25 @@ export default function CallIns() {
                   <div style={{ fontSize:14, color:'#374151', lineHeight:1.5 }}>{log.reason}</div>
                 </div>
                 {isAdmin && (
-                  <button className="btn-icon danger" onClick={() => deleteCallIn(log.id)} title="Delete"><X size={13}/></button>
+                  <button className="btn-icon danger" onClick={() => deleteCallIn(log.id)} title="Delete">
+                    <X size={13}/>
+                  </button>
                 )}
               </div>
             </div>
           ))}
           {logs.length === 0 && (
-            <div className="empty-state">No call-ins logged for {selected.name} yet.</div>
+            <div className="empty-state">No call-ins logged for {selected.name}.</div>
           )}
         </div>
       </div>
     );
   }
 
-  // ── Summary: card grid view ─────────────────────────────
+  // ── Summary: card grid ──
   const summary = activeEmps
-    .map(emp => {
-      const logs = allCallIns.filter(c => String(c.employee_id) === String(emp.id))
-        .sort((a,b) => (b.date||'').localeCompare(a.date||''));
-      return { emp, count: logs.length, last: logs[0]?.date };
-    })
-    .sort((a,b) => b.count - a.count || a.emp.name.localeCompare(b.emp.name));
+    .map(emp => ({ emp, logs: getEmpLogs(emp.id) }))
+    .sort((a, b) => b.logs.length - a.logs.length || a.emp.name.localeCompare(b.emp.name));
 
   return (
     <div>
@@ -121,8 +119,8 @@ export default function CallIns() {
           <div className="stat-label">This Month</div>
         </div>
         <div className="stat-card">
-          <div className="stat-num" style={{ color:'#dc2626' }}>{flagged}</div>
-          <div className="stat-label">Flagged (3+)</div>
+          <div className="stat-num" style={{ color:'#dc2626' }}>{repeatCount}</div>
+          <div className="stat-label">3+ Call-Ins</div>
         </div>
       </div>
 
@@ -130,29 +128,25 @@ export default function CallIns() {
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
         <h2 className="section-title">Call-In Tracker</h2>
         {isAdmin && (
-          <button className="btn-primary" onClick={() => { setForm({ employeeId:'', date:todaySA(), reason:'' }); setModal(true); }}>
+          <button className="btn-primary"
+            onClick={() => { setForm({ employeeId:'', date:todaySA(), reason:'' }); setModal(true); }}>
             <Plus size={14}/> Log Call-In
           </button>
         )}
       </div>
 
-      {/* Card grid — same layout as Team tab */}
+      {/* Card grid */}
       <div className="card-grid">
-        {summary.map(({ emp, count, last }) => {
-          const badgeColor = count >= 3 ? '#dc2626' : count >= 2 ? '#f59e0b' : '#16a34a';
-          const badgeBg    = count >= 3 ? '#fee2e2' : count >= 2 ? '#fef3c7' : '#f0fdf4';
-          const badgeBorder= count >= 3 ? '#fca5a5' : count >= 2 ? '#fde68a' : '#86efac';
-
+        {summary.map(({ emp, logs }) => {
+          const count = logs.length;
+          const last  = logs[0];
           return (
-            <div key={emp.id} className="emp-card" style={{ cursor:'pointer', transition:'box-shadow 0.15s' }}
-              onClick={() => setSelected(emp)}
-              onMouseEnter={e => e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,0.1)'}
-              onMouseLeave={e => e.currentTarget.style.boxShadow=''}>
-
-              {/* Avatar + name + count badge */}
-              <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
-                <div style={{ display:'flex', alignItems:'center', gap:10, minWidth:0 }}>
-                  <Avatar name={emp.name} photoUrl={emp.photo_url} size={44} />
+            <div key={emp.id} className="emp-card" style={{ cursor:'pointer' }}
+              onClick={() => setSelected(emp)}>
+              {/* Card header */}
+              <div style={{ display:'flex', gap:10, alignItems:'flex-start', justifyContent:'space-between' }}>
+                <div style={{ display:'flex', gap:10, alignItems:'center', minWidth:0 }}>
+                  <Avatar name={emp.name} photoUrl={emp.photo_url} size={42} />
                   <div style={{ minWidth:0 }}>
                     <div style={{ fontWeight:700, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                       {emp.name}
@@ -162,52 +156,60 @@ export default function CallIns() {
                 </div>
 
                 {/* Call-in count badge */}
-                <div style={{ textAlign:'center', flexShrink:0 }}>
-                  <div style={{ fontSize:24, fontWeight:800, fontFamily:'Manrope,sans-serif', lineHeight:1, color:badgeColor }}>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:3, flexShrink:0 }}>
+                  <span style={{
+                    background: count >= 3 ? '#fee2e2' : count >= 2 ? '#fef3c7' : count >= 1 ? '#f3f4f6' : '#f9fafb',
+                    color:      count >= 3 ? '#dc2626' : count >= 2 ? '#92400e' : count >= 1 ? '#374151' : '#9ca3af',
+                    border:     `1px solid ${count >= 3 ? '#fca5a5' : count >= 2 ? '#fde68a' : '#e5e7eb'}`,
+                    fontSize:13, fontWeight:700, padding:'3px 10px', borderRadius:20, minWidth:28, textAlign:'center',
+                    display:'flex', alignItems:'center', gap:4
+                  }}>
+                    {count >= 3 && <AlertTriangle size={11}/>}
                     {count}
-                  </div>
-                  <div style={{ fontSize:10, color:'#9ca3af', marginTop:1 }}>call-ins</div>
+                  </span>
                 </div>
-              </div>
-
-              {/* Status bar */}
-              <div style={{ marginTop:12, padding:'8px 10px', background:badgeBg, border:`1px solid ${badgeBorder}`, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <span style={{ fontSize:12, fontWeight:600, color:badgeColor }}>
-                  {count === 0 ? 'No call-ins — clean record ✓' :
-                   count === 1 ? '1 call-in on record' :
-                   count === 2 ? '2 call-ins — watch closely' :
-                   `${count} call-ins — flagged ⚠`}
-                </span>
-                {count >= 3 && <AlertTriangle size={14} color="#dc2626"/>}
               </div>
 
               {/* Last call-in */}
-              {last && (
-                <div style={{ marginTop:8, fontSize:12, color:'#6b7280' }}>
-                  Last: <strong style={{ color:'#374151' }}>{last}</strong>
+              <div className="emp-details" style={{ marginTop:10 }}>
+                <div>
+                  <span>Last call-in</span>
+                  <span>{last ? last.date : '—'}</span>
                 </div>
-              )}
-
-              <div style={{ marginTop:10, fontSize:12, color:'#9ca3af', textAlign:'right' }}>
-                Tap to view history →
+                <div>
+                  <span>Total</span>
+                  <span style={{ fontWeight:600, color: count >= 3 ? '#dc2626' : count >= 1 ? '#f59e0b' : '#374151' }}>
+                    {count} call-in{count !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                {last && (
+                  <div>
+                    <span>Reason</span>
+                    <span style={{ fontSize:12, color:'#374151' }}>
+                      {last.reason.length > 40 ? last.reason.slice(0, 40) + '…' : last.reason}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Log Call-In Modal */}
+      {/* Modal */}
       {modal && (
         <div className="modal-overlay" onClick={() => setModal(false)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ display:'flex', alignItems:'center', gap:8 }}><Phone size={16}/> Log Call-In</h3>
+              <h3 style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <Phone size={16}/> Log Call-In
+              </h3>
               <button className="btn-icon" onClick={() => setModal(false)}><X size={18}/></button>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               <label style={{ fontSize:13, fontWeight:600, color:'#374151', display:'flex', flexDirection:'column', gap:5 }}>
                 Employee
-                <select style={inp} value={form.employeeId} onChange={e => setForm(f => ({...f, employeeId:e.target.value}))}>
+                <select style={inp} value={form.employeeId} onChange={e => setForm(f => ({ ...f, employeeId:e.target.value }))}>
                   <option value="">Select employee...</option>
                   {activeEmps.sort((a,b) => a.name.localeCompare(b.name)).map(e =>
                     <option key={e.id} value={e.id}>{e.name} — {e.role}</option>
@@ -216,17 +218,18 @@ export default function CallIns() {
               </label>
               <label style={{ fontSize:13, fontWeight:600, color:'#374151', display:'flex', flexDirection:'column', gap:5 }}>
                 Date
-                <input style={inp} type="date" value={form.date} onChange={e => setForm(f => ({...f, date:e.target.value}))} />
+                <input style={inp} type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date:e.target.value }))} />
               </label>
               <label style={{ fontSize:13, fontWeight:600, color:'#374151', display:'flex', flexDirection:'column', gap:5 }}>
                 Reason
-                <textarea value={form.reason} onChange={e => setForm(f => ({...f, reason:e.target.value}))} rows={3}
-                  style={{ ...inp, resize:'none' }} placeholder="e.g. Called in sick, no prior notice" />
+                <textarea value={form.reason} onChange={e => setForm(f => ({ ...f, reason:e.target.value }))}
+                  rows={3} style={{ ...inp, resize:'none' }} placeholder="e.g. Called in sick, no notice given" />
               </label>
             </div>
             <div className="modal-footer">
               <button className="btn-secondary" onClick={() => setModal(false)}>Cancel</button>
-              <button className="btn-primary" onClick={save} disabled={saving || !form.employeeId || !form.reason.trim()}>
+              <button className="btn-primary" onClick={save}
+                disabled={saving || !form.employeeId || !form.reason.trim()}>
                 <Check size={14}/> {saving ? 'Saving...' : 'Log Call-In'}
               </button>
             </div>
