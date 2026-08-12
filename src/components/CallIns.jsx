@@ -157,36 +157,39 @@ export default function CallIns() {
         {activeEmps
           .map(emp => ({
             emp,
-            logs: allCallIns.filter(c=>String(c.employee_id)===String(emp.id)),
+            logs: [...allCallIns.filter(c=>String(c.employee_id)===String(emp.id))].sort((a,b)=>(b.date||'').localeCompare(a.date||'')),
           }))
           .sort((a,b) => b.logs.length - a.logs.length || a.emp.name.localeCompare(b.emp.name))
           .map(({ emp, logs }) => {
             const count = logs.length;
-            const last  = logs.sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0];
+            const last  = logs[0];
             return (
               <div key={emp.id} className="emp-card" style={{ cursor:'pointer', borderTop:`3px solid ${count>=3?'#dc2626':count>=2?'#f59e0b':'#e5e7eb'}` }}
                 onClick={()=>setSelected(emp.id)}>
-                <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:10 }}>
+
+                {/* Top: avatar + name + badge — always same layout */}
+                <div style={{ display:'flex', gap:10, alignItems:'center' }}>
                   <Avatar name={emp.name} photoUrl={emp.photo_url} size={42} />
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontWeight:700, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{emp.name}</div>
                     <div style={{ fontSize:12, color:'#6b7280' }}>{emp.role}</div>
                   </div>
-                  {/* Count badge */}
-                  {count > 0 && (
-                    <span style={{ background:count>=3?'#fee2e2':count>=2?'#fef3c7':'#f3f4f6', color:count>=3?'#dc2626':count>=2?'#92400e':'#374151', border:`1px solid ${count>=3?'#fca5a5':count>=2?'#fde68a':'#e5e7eb'}`, fontSize:13, fontWeight:800, padding:'4px 10px', borderRadius:20, whiteSpace:'nowrap', flexShrink:0 }}>
-                      {count}
-                    </span>
-                  )}
+                  <span style={{ background:count>0?(count>=3?'#fee2e2':count>=2?'#fef3c7':'#f3f4f6'):'#f3f4f6', color:count>0?(count>=3?'#dc2626':count>=2?'#92400e':'#374151'):'#d1d5db', border:`1px solid ${count>0?(count>=3?'#fca5a5':count>=2?'#fde68a':'#e5e7eb'):'#e5e7eb'}`, fontSize:13, fontWeight:800, padding:'4px 10px', borderRadius:20, flexShrink:0, minWidth:32, textAlign:'center' }}>
+                    {count}
+                  </span>
                 </div>
 
-                {/* Last call-in preview */}
-                {last && (
-                  <div style={{ background:'#fef9f9', border:'1px solid #fecaca', borderRadius:7, padding:'8px 10px' }}>
-                    <div style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:2 }}>Last call-in · {last.date}</div>
-                    <div style={{ fontSize:12, color:'#374151', lineHeight:1.4, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{last.reason}</div>
-                  </div>
-                )}
+                {/* Bottom: last call-in OR placeholder — always present so all cards same height */}
+                <div style={{ marginTop:10, background:last?'#fef9f9':'#f9fafb', border:`1px solid ${last?'#fecaca':'#f3f4f6'}`, borderRadius:7, padding:'8px 10px', minHeight:50 }}>
+                  {last ? (
+                    <>
+                      <div style={{ fontSize:11, fontWeight:700, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.04em', marginBottom:2 }}>Last · {last.date}</div>
+                      <div style={{ fontSize:12, color:'#374151', lineHeight:1.4, overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>{last.reason}</div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize:12, color:'#d1d5db', fontStyle:'italic' }}>No call-ins recorded</div>
+                  )}
+                </div>
               </div>
             );
           })}
