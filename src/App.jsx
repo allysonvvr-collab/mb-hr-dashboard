@@ -12,10 +12,11 @@ import Observations from './components/Observations';
 import Incidents from './components/Incidents';
 import Certifications from './components/Certifications';
 import Celebrations from './components/Celebrations';
+import CallIns from './components/CallIns';
 import UserManagement from './components/UserManagement';
 import mbLogo from './assets/mb-logo.webp';
 import {
-  Download, Users, UserPlus, BarChart2, Star,
+  Download, Users, UserPlus, BarChart2, Star, Phone,
   Calendar, TrendingUp, Shirt, AlertTriangle,
   Award, LogOut, Crown, Shield, User, Settings,
   Gift, Menu, X as XIcon, ClipboardList
@@ -31,6 +32,7 @@ const TABS = [
   { id: 'raises',         label: 'Raises',           shortLabel: 'Raises',  icon: TrendingUp    },
   { id: 'uniforms',       label: 'Uniforms',         shortLabel: 'Uniforms',icon: Shirt         },
   { id: 'incidents',      label: 'Damages',          shortLabel: 'Damages', icon: AlertTriangle },
+  { id: 'callins',        label: 'Call-In Tracker',  shortLabel: 'Call-Ins',icon: Phone         },
   { id: 'certifications', label: 'Certifications',   shortLabel: 'Certs',   icon: Award         },
   { id: 'celebrations',   label: 'Birthdays & Anniv',shortLabel: 'Events',  icon: Gift          },
 ];
@@ -39,6 +41,7 @@ const COMPONENTS = {
   team: Team, hiring: Hiring, performance: Performance,
   reviews: Reviews, observations: Observations, timeoff: TimeOff, raises: Raises,
   uniforms: Uniforms, incidents: Incidents,
+  callins: CallIns,
   certifications: Certifications, celebrations: Celebrations,
 };
 
