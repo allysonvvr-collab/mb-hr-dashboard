@@ -179,6 +179,10 @@ export function AppProvider({ children }) {
   };
 
   // ── BLACKLIST ─────────────────────────────────────────────────
+  const addCallIn    = async (ci) => { const { error } = await supabase.from('call_ins').insert([{ employee_id:ci.employeeId, date:ci.date, reason:ci.reason, excused:ci.excused===true }]); if (error) throw error; fetchAll(); };
+  const updateCallIn = async (ci) => { const { error } = await supabase.from('call_ins').update({ date:ci.date, reason:ci.reason, excused:ci.excused===true }).eq('id', ci.id); if (error) throw error; fetchAll(); };
+  const deleteCallIn = async (id) => { const { error } = await supabase.from('call_ins').delete().eq('id', id); if (error) throw error; fetchAll(); };
+
   const addBlacklist    = async (b) => { const { error } = await supabase.from('blacklist').insert([{ name:b.name, position:b.position||null, phone:b.phone||null, reason:b.reason||null }]); if (error) throw error; fetchAll(); };
   const deleteBlacklist = async (id) => { const { error } = await supabase.from('blacklist').delete().eq('id', id); if (error) throw error; fetchAll(); };
 
@@ -228,6 +232,7 @@ export function AppProvider({ children }) {
       ...crud,
       uploadEmployeePhoto,
       exportData, signIn, signOut, resetPassword,
+      addCallIn, updateCallIn, deleteCallIn,
       addBlacklist, deleteBlacklist,
       getAllProfiles, updateUserRole, inviteUser, fetchAll,
     }}>

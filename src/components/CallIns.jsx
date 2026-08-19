@@ -185,22 +185,29 @@ export default function CallIns() {
   return (
     <div>
       {/* Stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:24 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:20 }}>
         <div className="stat-card">
           <div className="stat-num">{allCallIns.length}</div>
           <div className="stat-label">Total</div>
         </div>
-        <div className="stat-card" style={{ borderTop:'3px solid #86efac' }}>
-          <div className="stat-num" style={{ color:'#15803d' }}>{allCallIns.filter(c=>c.excused===true).length}</div>
-          <div className="stat-label">Excused</div>
-        </div>
-        <div className="stat-card" style={{ borderTop:'3px solid #fca5a5' }}>
-          <div className="stat-num" style={{ color:'#b91c1c' }}>{allCallIns.filter(c=>c.excused!==true).length}</div>
-          <div className="stat-label">Unexcused</div>
-        </div>
         <div className="stat-card">
           <div className="stat-num" style={{ color:'#f59e0b' }}>{thisMonth}</div>
           <div className="stat-label">This Month</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-num" style={{ color:'#dc2626' }}>{repeat}</div>
+          <div className="stat-label">3+ Call-Ins</div>
+        </div>
+      </div>
+      {/* Excused / Unexcused bar */}
+      <div style={{ display:'flex', gap:8, marginBottom:20 }}>
+        <div style={{ flex:1, background:'#f0fdf4', border:'1px solid #86efac', borderRadius:10, padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <span style={{ fontSize:13, fontWeight:600, color:'#15803d' }}>✓ Excused</span>
+          <span style={{ fontSize:22, fontWeight:800, fontFamily:'Manrope,sans-serif', color:'#15803d' }}>{allCallIns.filter(c=>c.excused===true).length}</span>
+        </div>
+        <div style={{ flex:1, background:'#fef2f2', border:'1px solid #fca5a5', borderRadius:10, padding:'12px 16px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <span style={{ fontSize:13, fontWeight:600, color:'#b91c1c' }}>✗ Unexcused</span>
+          <span style={{ fontSize:22, fontWeight:800, fontFamily:'Manrope,sans-serif', color:'#b91c1c' }}>{allCallIns.filter(c=>c.excused!==true).length}</span>
         </div>
       </div>
 
