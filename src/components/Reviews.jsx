@@ -105,7 +105,7 @@ export default function Reviews() {
 
   // Same eligibility rule as Damages and Observation Log, so every tab agrees on who shows up.
   const eligible = (data.employees || [])
-    .filter(e => !NON_TRACKED_ROLES.includes(e.role))
+    .filter(e => !NON_TRACKED_ROLES.includes(e.role) && e.employment_status !== 'Terminated')
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const allReviews = data.reviews || [];

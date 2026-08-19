@@ -45,7 +45,7 @@ export default function Observations({ observationTarget, clearObservationTarget
   }, [observationTarget]);
 
   const eligible = (data.employees || [])
-    .filter(e => !NON_TRACKED_ROLES.includes(e.role))
+    .filter(e => !NON_TRACKED_ROLES.includes(e.role) && e.employment_status !== 'Terminated')
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const allObs = data.observations || [];
