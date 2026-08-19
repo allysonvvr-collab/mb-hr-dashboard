@@ -46,7 +46,7 @@ function EventRow({ name, role, type, monthDay, days, extra, photoUrl }) {
 
 export default function Celebrations() {
   const { data } = useApp();
-  const employees = data.employees || [];
+  const employees = (data.employees || []).filter(e => e.employment_status !== 'Terminated');
 
   // Birthdays — works whether birthday is a real YYYY-MM-DD date or a legacy "Jul 21" string
   const allBirthdays = employees

@@ -68,7 +68,7 @@ export default function Certifications() {
 
       <h3 style={{ marginTop:24, marginBottom:10, fontSize:12, fontWeight:700, color:'#6b7280', textTransform:'uppercase', letterSpacing:'0.05em' }}>Coverage by Employee</h3>
       <div className="card-grid" style={{ gridTemplateColumns:'repeat(auto-fill, minmax(160px,1fr))' }}>
-        {(data.employees||[]).map(emp => {
+        {(data.employees||[]).filter(e=>e.employment_status!=='Terminated').map(emp => {
           const certs = (data.certifications||[]).filter(c=>idsMatch(c.employee_id, emp.id));
           return (
             <div key={emp.id} className="emp-card" style={{ padding:'12px 14px' }}>
@@ -91,7 +91,7 @@ export default function Certifications() {
             <div className="modal-header"><h3>{modal==='add'?'Add Certification':'Edit Certification'}</h3><button className="btn-icon" onClick={closeModal}><X size={18}/></button></div>
             {saveError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{saveError}</div>}
             <div className="form-grid">
-              <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
+              <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).filter(e=>e.employment_status!=='Terminated').map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Certification<select style={inp} value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}>{CERT_NAMES.map(n=><option key={n}>{n}</option>)}</select></label>
               <label>Date Earned<input style={inp} type="date" value={form.earned} onChange={e=>setForm(f=>({...f,earned:e.target.value}))} /></label>
               <label>Expiry Date (blank = none)<input style={inp} type="date" value={form.expires} onChange={e=>setForm(f=>({...f,expires:e.target.value}))} /></label>

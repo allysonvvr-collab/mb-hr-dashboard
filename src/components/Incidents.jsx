@@ -129,6 +129,7 @@ export default function Incidents() {
   // Same eligibility rule as the Observation Log, so the two tabs always agree
   // on who shows up — Owner/Ops Manager are leadership, not tracked.
   const eligible = (data.employees || [])
+    .filter(e => e.employment_status !== 'Terminated')
     .filter(e => !NON_TRACKED_ROLES.includes(e.role))
     .sort((a, b) => a.name.localeCompare(b.name));
 

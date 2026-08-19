@@ -282,7 +282,7 @@ export default function TimeOff() {
               </div>
             )}
             <div className="form-grid">
-              <label>Employee<select style={inp} value={form.employeeId} onChange={e => setForm(f => ({ ...f, employeeId:e.target.value }))}><option value="">Select...</option>{(data.employees || []).map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
+              <label>Employee<select style={inp} value={form.employeeId} onChange={e => setForm(f => ({ ...f, employeeId:e.target.value }))}><option value="">Select...</option>{(data.employees || []).filter(e=>e.employment_status!=='Terminated').map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Type<select style={inp} value={form.type} onChange={e => setForm(f => ({ ...f, type:e.target.value }))}>{TYPES.map(t => <option key={t}>{t}</option>)}</select></label>
               <label>Start Date<input style={inp} type="date" value={form.startDate} onChange={e => handleStartDate(e.target.value)} /></label>
               <label>End Date<input style={inp} type="date" value={form.endDate} min={form.startDate} onChange={e => handleEndDate(e.target.value)} /></label>

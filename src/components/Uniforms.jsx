@@ -152,7 +152,7 @@ export default function Uniforms() {
             <div className="modal-header"><h3>{modal==='add'?'Issue Uniform':'Edit Uniform'}</h3><button className="btn-icon" onClick={closeModal}><X size={18}/></button></div>
             {issueError && <div style={{ background:'#fef2f2', border:'1px solid #fecaca', color:'#dc2626', padding:'10px 12px', borderRadius:8, fontSize:13, marginBottom:12 }}>{issueError}</div>}
             <div className="form-grid">
-              <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
+              <label>Employee<select style={inp} value={form.employeeId} onChange={e=>setForm(f=>({...f,employeeId:e.target.value}))}><option value="">Select...</option>{(data.employees||[]).filter(e=>e.employment_status!=='Terminated').map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></label>
               <label>Item<select style={inp} value={form.item} onChange={e=>setForm(f=>({...f,item:e.target.value}))}>{ITEMS.map(i=><option key={i}>{i}</option>)}</select></label>
               <label>Size<select style={inp} value={form.size} onChange={e=>setForm(f=>({...f,size:e.target.value}))}>{SIZES.map(s=><option key={s}>{s}</option>)}</select></label>
               <label>Qty<input style={inp} type="number" min="1" value={form.qty} onChange={e=>setForm(f=>({...f,qty:e.target.value}))} /></label>
