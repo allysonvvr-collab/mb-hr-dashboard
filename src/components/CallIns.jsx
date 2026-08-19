@@ -179,61 +179,28 @@ export default function CallIns() {
   return (
     <div>
       {/* Stats */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10, marginBottom:20 }}>
-        {/* Total — with excused/unexcused breakdown */}
-        <div className="stat-card" style={{ gridColumn:'1/-1' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div>
-              <div className="stat-num">{allCallIns.length}</div>
-              <div className="stat-label">Total Call-Ins</div>
-            </div>
-            <div style={{ display:'flex', gap:16 }}>
-              <div style={{ textAlign:'center' }}>
-                <div style={{ fontSize:24, fontWeight:800, fontFamily:'Manrope,sans-serif', color:'#15803d' }}>
-                  {allCallIns.filter(c=>c.excused===true).length}
-                </div>
-                <div style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#6b7280', marginTop:2 }}>
-                  <span style={{ width:8, height:8, borderRadius:'50%', background:'#86efac', display:'inline-block' }}/>
-                  Excused
-                </div>
-              </div>
-              <div style={{ textAlign:'center' }}>
-                <div style={{ fontSize:24, fontWeight:800, fontFamily:'Manrope,sans-serif', color:'#b91c1c' }}>
-                  {allCallIns.filter(c=>c.excused!==true).length}
-                </div>
-                <div style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#6b7280', marginTop:2 }}>
-                  <span style={{ width:8, height:8, borderRadius:'50%', background:'#fca5a5', display:'inline-block' }}/>
-                  Unexcused
-                </div>
-              </div>
-            </div>
-          </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:24 }}>
+        <div className="stat-card">
+          <div className="stat-num">{allCallIns.length}</div>
+          <div className="stat-label">Total</div>
+        </div>
+        <div className="stat-card" style={{ borderTop:'3px solid #86efac' }}>
+          <div className="stat-num" style={{ color:'#15803d' }}>{allCallIns.filter(c=>c.excused===true).length}</div>
+          <div className="stat-label">Excused</div>
+        </div>
+        <div className="stat-card" style={{ borderTop:'3px solid #fca5a5' }}>
+          <div className="stat-num" style={{ color:'#b91c1c' }}>{allCallIns.filter(c=>c.excused!==true).length}</div>
+          <div className="stat-label">Unexcused</div>
         </div>
         <div className="stat-card">
           <div className="stat-num" style={{ color:'#f59e0b' }}>{thisMonth}</div>
           <div className="stat-label">This Month</div>
         </div>
-        <div className="stat-card">
-          <div className="stat-num" style={{ color:'#dc2626' }}>{repeat}</div>
-          <div className="stat-label">3+ Call-Ins</div>
-        </div>
       </div>
 
       {/* Header */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-        <div>
-          <h2 className="section-title" style={{ marginBottom:4 }}>Call-In Tracker</h2>
-          <div style={{ display:'flex', gap:12, fontSize:12, color:'#6b7280' }}>
-            <span style={{ display:'flex', alignItems:'center', gap:5 }}>
-              <span style={{ width:10, height:10, borderRadius:'50%', background:'#dcfce7', border:'1.5px solid #86efac', display:'inline-block' }}/>
-              Excused / Doctor's Note
-            </span>
-            <span style={{ display:'flex', alignItems:'center', gap:5 }}>
-              <span style={{ width:10, height:10, borderRadius:'50%', background:'#fee2e2', border:'1.5px solid #fca5a5', display:'inline-block' }}/>
-              Unexcused
-            </span>
-          </div>
-        </div>
+        <h2 className="section-title">Call-In Tracker</h2>
         {isAdmin && (
           <button className="btn-primary" onClick={()=>openAdd(null)}>
             <Plus size={14}/> Log Call-In
