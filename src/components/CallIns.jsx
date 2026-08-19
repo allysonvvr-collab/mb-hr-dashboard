@@ -35,18 +35,24 @@ export default function CallIns() {
 
   const openAdd  = (empId) => { setForm({ ...emptyForm, employeeId: empId ? String(empId) : '' }); setModal('add'); };
   const openEdit = (log)   => { setForm({ employeeId:String(log.employee_id), date:log.date, reason:log.reason, excused:log.excused===true, id:log.id }); setModal(log); };
-  const closeModal = () => { setModal(null); setForm(emptyForm); };
+  const closeModal = () => { setModal(null); setForm(emptyForm); setSaving(false); };
 
   const save = async () => {
     if (!form.employeeId || !form.date || !form.reason.trim()) return;
     setSaving(true);
-    if (modal === 'add') {
-      await addCallIn({ employeeId:parseInt(form.employeeId), date:form.date, reason:form.reason.trim(), excused:form.excused });
-    } else {
-      await updateCallIn({ id:form.id, date:form.date, reason:form.reason.trim(), excused:form.excused });
+    try {
+      if (modal === 'add') {
+        await addCallIn({ employeeId:parseInt(form.employeeId), date:form.date, reason:form.reason.trim(), excused:form.excused===true });
+      } else {
+        await updateCallIn({ id:form.id, date:form.date, reason:form.reason.trim(), excused:form.excused===true });
+      }
+      closeModal();
+    } catch(err) {
+      console.error('CallIn save error:', err);
+      alert('Failed to save. Check your connection and try again.');
+    } finally {
+      setSaving(false);
     }
-    closeModal();
-    setSaving(false);
   };
 
   // ── Drill-in: single employee ──────────────────────────────────────────
