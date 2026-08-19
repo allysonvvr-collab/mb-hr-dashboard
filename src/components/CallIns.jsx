@@ -178,11 +178,36 @@ export default function CallIns() {
 
   return (
     <div>
-      {/* Stats — always totals, excused + unexcused combined */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:20 }}>
-        <div className="stat-card">
-          <div className="stat-num">{allCallIns.length}</div>
-          <div className="stat-label">Total</div>
+      {/* Stats */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10, marginBottom:20 }}>
+        {/* Total — with excused/unexcused breakdown */}
+        <div className="stat-card" style={{ gridColumn:'1/-1' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <div className="stat-num">{allCallIns.length}</div>
+              <div className="stat-label">Total Call-Ins</div>
+            </div>
+            <div style={{ display:'flex', gap:16 }}>
+              <div style={{ textAlign:'center' }}>
+                <div style={{ fontSize:24, fontWeight:800, fontFamily:'Manrope,sans-serif', color:'#15803d' }}>
+                  {allCallIns.filter(c=>c.excused===true).length}
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#6b7280', marginTop:2 }}>
+                  <span style={{ width:8, height:8, borderRadius:'50%', background:'#86efac', display:'inline-block' }}/>
+                  Excused
+                </div>
+              </div>
+              <div style={{ textAlign:'center' }}>
+                <div style={{ fontSize:24, fontWeight:800, fontFamily:'Manrope,sans-serif', color:'#b91c1c' }}>
+                  {allCallIns.filter(c=>c.excused!==true).length}
+                </div>
+                <div style={{ display:'flex', alignItems:'center', gap:4, fontSize:11, color:'#6b7280', marginTop:2 }}>
+                  <span style={{ width:8, height:8, borderRadius:'50%', background:'#fca5a5', display:'inline-block' }}/>
+                  Unexcused
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="stat-card">
           <div className="stat-num" style={{ color:'#f59e0b' }}>{thisMonth}</div>
